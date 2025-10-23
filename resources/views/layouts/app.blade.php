@@ -181,9 +181,6 @@
                 @yield('content')
             </main>
         </div>
-        <footer class="footer">
-            &copy; {{ date('Y') }} Dagupan City National Highschool Library &mdash; Powered by LibraFlow
-        </footer>
         <!-- Bootstrap JS Bundle -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 

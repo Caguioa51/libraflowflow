@@ -37,26 +37,9 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'profile_photo' => 'nullable|file|image|max:2048',
+            'student_id' => 'nullable|string|max:255',
         ]);
         $user->fill($validated);
-
-        \Log::info('Profile update request received', [
-            'hasFile' => $request->hasFile('profile_photo'),
-            'file' => $request->file('profile_photo'),
-        ]);
-
-        if ($request->hasFile('profile_photo')) {
-            $file = $request->file('profile_photo');
-            $filename = uniqid('profile_') . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('public/profile_photos', $filename);
-            \Log::info('Profile photo saved', ['filename' => $filename]);
-            // Delete old photo if exists and is not default
-            if ($user->profile_photo && \Storage::disk('public')->exists('profile_photos/' . $user->profile_photo)) {
-                \Storage::disk('public')->delete('profile_photos/' . $user->profile_photo);
-            }
-            $user->profile_photo = $filename;
-        }
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
@@ -64,7 +47,7 @@ class ProfileController extends Controller
 
         $user->save();
 
-    return Redirect::route('settings')->with('success', 'Profile updated successfully!');
+        return Redirect::route('settings')->with('success', 'Profile updated successfully!');
     }
 
     /**

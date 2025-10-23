@@ -86,4 +86,64 @@ class UserManagementController extends Controller
 
         return view('admin.users.history', compact('borrowings', 'user'));
     }
+
+    public function updateStudentId(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'student_id' => 'nullable|string|max:255'
+        ]);
+
+        try {
+            $user = User::findOrFail($request->user_id);
+
+            // Check if the new student_id is already taken by another user
+            if ($request->student_id) {
+                $existingUser = User::where('student_id', $request->student_id)
+                                   ->where('id', '!=', $user->id)
+                                   ->first();
+
+                if ($existingUser) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This Student ID is already assigned to ' . $existingUser->name
+                    ]);
+                }
+            }
+
+            $oldStudentId = $user->student_id;
+            $user->update(['student_id' => $request->student_id]);
+
+            // Log the change for audit purposes
+            \Log::info('Admin updated student ID', [
+                'admin_id' => auth()->id(),
+                'admin_name' => auth()->user()->name,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'old_student_id' => $oldStudentId,
+                'new_student_id' => $request->student_id
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Student ID updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to update student ID', [
+                'error' => $e->getMessage(),
+                'user_id' => $request->user_id,
+                'admin_id' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update Student ID. Please try again.'
+            ]);
+        }
+    }
 }

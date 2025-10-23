@@ -14,22 +14,27 @@ class BookController extends Controller
      */
     public function index()
     {
-        $query = Book::with(['category', 'author']);
+        $query = Book::with(['category', 'author'])
+            ->whereNotNull('author_id')
+            ->whereNotNull('category_id');
+
         if ($search = request('search')) {
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', "%$search%")
                   ->orWhereHas('author', function($q2) use ($search) {
-                      $q2->where('name', 'like', "%$search%")
-                  ;})
-                  ->orWhere('genre', 'like', "%$search%")
-                ;
+                      $q2->where('name', 'like', "%$search%");
+                  })
+                  ->orWhere('genre', 'like', "%$search%");
             });
         }
+
         if ($categoryId = request('category_id')) {
             $query->where('category_id', $categoryId);
         }
-        $books = $query->paginate(10);
-        $categories = Category::all();
+
+        $books = $query->paginate(12); // Increased per page for better grid layout
+        $categories = Category::has('books')->withCount('books')->get();
+
         return view('books.index', compact('books', 'categories'));
     }
 

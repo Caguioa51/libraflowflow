@@ -12,7 +12,9 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::paginate(10);
+        $categories = Category::has('books')
+                            ->withCount('books')
+                            ->paginate(10);
         return view('categories.index', compact('categories'));
     }
 
@@ -48,6 +50,11 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
+        $category->load(['books' => function($query) {
+            $query->with(['author', 'category'])
+                  ->orderBy('title');
+        }]);
+
         return view('categories.show', compact('category'));
     }
 

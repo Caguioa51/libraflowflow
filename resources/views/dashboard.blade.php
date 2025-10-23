@@ -5,7 +5,7 @@
     <div class="p-5 mb-4 bg-primary text-white rounded-3 shadow-sm">
         <div class="container-fluid py-2">
             <h1 class="display-5 fw-bold">Welcome, {{ auth()->user()->name }}!</h1>
-            <p class="col-md-8 fs-4">This is the Dagupan City National Highschool Library System. Manage your books, borrowing, and more with ease.</p>
+            <p class="col-md-8 fs-4">This is the Dagupan City National Highschool Library Management System. Manage your books, borrowing, and more with ease.</p>
         </div>
     </div>
     <div class="row mb-4 align-items-stretch">
@@ -102,6 +102,11 @@
                         </div>
                     @endif
 
+                    <div class="mt-3">
+                        <a href="{{ route('borrowings.my_history') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-clock-history me-2"></i>View My Complete Borrowing History
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -117,17 +122,17 @@
     @endif
 
     <div class="row g-4 mb-4">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card text-center h-100 border-3 border-primary shadow-lg">
                 <div class="card-body p-4">
                     <div class="mb-3"><i class="bi bi-book-half fs-1 text-primary"></i></div>
-                    <h5 class="card-title text-primary">Books</h5>
+                    <h5 class="card-title text-primary">Library Books</h5>
                     <p class="card-text fs-3 fw-bold text-primary">{{ \App\Models\Book::count() }}</p>
-                    <a href="{{ route('books.index') }}" class="btn btn-primary btn-sm">View Books</a>
+                    <a href="{{ route('books.index') }}" class="btn btn-primary btn-sm">Browse & Borrow</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card text-center h-100 border-3 border-success shadow-lg">
                 <div class="card-body p-4">
                     <div class="mb-3"><i class="bi bi-tags fs-1 text-success"></i></div>
@@ -137,7 +142,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card text-center h-100 border-3 border-warning shadow-lg">
                 <div class="card-body p-4">
                     <div class="mb-3"><i class="bi bi-person-lines-fill fs-1 text-warning"></i></div>
@@ -147,39 +152,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-center h-100 border-3 border-info shadow-lg">
-                <div class="card-body p-4">
-                    <div class="mb-3"><i class="bi bi-arrow-left-right fs-1 text-info"></i></div>
-                    <h5 class="card-title text-info">Borrowings</h5>
-                    <p class="card-text fs-3 fw-bold text-info">{{ \App\Models\Borrowing::count() }}</p>
-                    <a href="{{ route('borrowings.index') }}" class="btn btn-info btn-sm">View Borrowings</a>
-                </div>
-            </div>
-        </div>
     </div>
-    <div class="row g-4">
-        @if(!auth()->user()->isAdmin())
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-clock-history me-2"></i>My Borrowing History</h5>
-                    <p class="card-text">See all the books you have borrowed and their status.</p>
-                    <a href="{{ route('borrowings.my_history') }}" class="btn btn-outline-secondary">My Borrowings</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-cart-check me-2"></i>Self-Service Checkout</h5>
-                    <p class="card-text">Borrow books instantly without waiting for librarian assistance.</p>
-                    <a href="{{ route('borrowings.self_checkout') }}" class="btn btn-outline-primary">Start Self-Checkout</a>
-                </div>
-            </div>
-        </div>
-        @endif
-    </div>
+
 
 </div>
 <!-- Bootstrap Icons -->

@@ -94,7 +94,7 @@ class BorrowingController extends Controller
 
         if ($isSelfService) {
             $message = 'Book borrowed successfully! You can manage your borrowings in "My Borrowing History".';
-            $redirectRoute = 'borrowings.my_history';
+            $redirectRoute = 'borrowings.my_history'; // Redirect to user's borrowing history
         } else {
             // Admin borrowing for another user
             $userName = $validated['user_id'] == auth()->id() ? 'yourself' : User::find($validated['user_id'])->name;
@@ -245,18 +245,18 @@ class BorrowingController extends Controller
 
         // Handle POST request for student search
         if ($request->isMethod('post')) {
-            $rfidCard = $request->input('rfid_card');
+            $barcode = $request->input('barcode');
             $searchQuery = $request->input('search_query');
 
-            if ($rfidCard) {
-                // Search by RFID card
-                $foundUser = User::where('rfid_card', $rfidCard)->first();
+            if ($barcode) {
+                // Search by barcode
+                $foundUser = User::where('barcode', $barcode)->first();
                 if ($foundUser) {
                     return redirect()->route('borrowings.admin_borrow', ['user_id' => $foundUser->id])
-                        ->with('success', 'Student found via RFID card.');
+                        ->with('success', 'Student found via barcode.');
                 } else {
                     return redirect()->route('borrowings.admin_borrow')
-                        ->with('error', 'No student found with this RFID card.')
+                        ->with('error', 'No student found with this barcode.')
                         ->withInput();
                 }
             } elseif ($searchQuery) {
@@ -288,22 +288,22 @@ class BorrowingController extends Controller
         return view('borrowings.admin_borrow', compact('books', 'selectedUser'));
     }
 
-    public function adminRfidLookup(Request $request)
+    public function adminBarcodeLookup(Request $request)
     {
         if (!auth()->user()->isAdmin()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $request->validate([
-            'rfid_card' => 'required|string'
+            'barcode' => 'required|string'
         ]);
 
-        $user = User::where('rfid_card', $request->rfid_card)->first();
+        $user = User::where('barcode', $request->barcode)->first();
 
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'No student found with this RFID card.'
+                'message' => 'No student found with this barcode.'
             ]);
         }
 
@@ -472,7 +472,11 @@ class BorrowingController extends Controller
             return redirect()->route('dashboard')->with('error', 'Self-service checkout is currently disabled.');
         }
 
-        $books = Book::where('status', 'available')->with(['author', 'category'])->get();
+        $books = Book::where('status', 'available')
+            ->whereNotNull('author_id')
+            ->whereNotNull('category_id')
+            ->with(['author', 'category'])
+            ->get();
         return view('borrowings.self_checkout', compact('books'));
     }
 

@@ -22,9 +22,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'profile_photo',
         'student_id',
-        'rfid_card',
+        'barcode',
     ];
 
     /**
@@ -70,11 +69,5 @@ class User extends Authenticatable
         return $this->role === 'student';
     }
 
-    public function getProfilePhotoUrlAttribute()
-    {
-        if ($this->profile_photo) {
-            return asset('storage/profile_photos/' . $this->profile_photo);
-        }
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=003366&color=fff&size=128';
-    }
+
 }

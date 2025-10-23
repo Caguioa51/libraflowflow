@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 
-class RfidController extends Controller
+class BarcodeController extends Controller
 {
     public function scan()
     {
@@ -14,7 +14,7 @@ class RfidController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        return view('admin.rfid.scan');
+        return view('admin.barcode.scan');
     }
 
     public function lookup(Request $request)
@@ -24,15 +24,15 @@ class RfidController extends Controller
         }
 
         $request->validate([
-            'rfid_card' => 'required|string'
+            'barcode' => 'required|string'
         ]);
 
-        $user = User::where('rfid_card', $request->rfid_card)->first();
+        $user = User::where('barcode', $request->barcode)->first();
 
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'No user found with this RFID card.'
+                'message' => 'No user found with this barcode.'
             ]);
         }
 
@@ -57,14 +57,12 @@ class RfidController extends Controller
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'rfid_card' => 'required|string|unique:users,rfid_card'
+            'barcode' => 'required|string|unique:users,barcode'
         ]);
 
         $user = User::findOrFail($request->user_id);
-        $user->update(['rfid_card' => $request->rfid_card]);
+        $user->update(['barcode' => $request->barcode]);
 
-        return redirect()->back()->with('success', 'RFID card assigned successfully to ' . $user->name);
+        return redirect()->back()->with('success', 'Barcode assigned successfully to ' . $user->name);
     }
-
-
 }

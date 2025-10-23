@@ -5,11 +5,11 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="bi bi-credit-card-2-front me-2"></i>RFID Scanner</h2>
+                <h2><i class="bi bi-upc-scan me-2"></i>Barcode Scanner</h2>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item active">RFID Scan</li>
+                        <li class="breadcrumb-item active">Barcode Scan</li>
                     </ol>
                 </nav>
             </div>
@@ -18,14 +18,14 @@
                 <div class="col-lg-8">
                     <div class="card">
                         <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-credit-card-2-front me-2"></i>Scan RFID Card</h5>
+                            <h5 class="mb-0"><i class="bi bi-upc-scan me-2"></i>Scan Barcode</h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-4">
-                                <label for="rfid_input" class="form-label">RFID Card Number</label>
+                                <label for="barcode_input" class="form-label">Barcode Number</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control form-control-lg" id="rfid_input"
-                                           placeholder="Scan or enter RFID card number..." autocomplete="off"
+                                    <input type="text" class="form-control form-control-lg" id="barcode_input"
+                                           placeholder="Scan or enter barcode number..." autocomplete="off"
                                            autofocus>
                                     <button class="btn btn-primary" type="button" id="scan_btn">
                                         <i class="bi bi-upc-scan me-2"></i>Lookup User
@@ -36,12 +36,8 @@
                                 </div>
                                 <div class="form-text">
                                     <i class="bi bi-info-circle me-1"></i>
-                                    📷 <strong>Scanner Ready!</strong> Scan RFID card or enter manually • Auto-lookup enabled • Press F1 for help
+                                    📷 <strong>Scanner Ready!</strong> Scan printed barcode or enter manually • Auto-lookup enabled • Press F1 for help
                                 </div>
-
-
-
-
 
                                 <!-- Status Indicator -->
                                 <div id="scan_status" class="mt-2">
@@ -92,7 +88,7 @@
                             <div id="no_user" class="d-none">
                                 <div class="alert alert-warning">
                                     <i class="bi bi-exclamation-triangle me-2"></i>
-                                    <strong>No user found with this RFID card.</strong>
+                                    <strong>No user found with this barcode.</strong>
                                     <br>
                                     <span id="no_user_message"></span>
                                 </div>
@@ -105,15 +101,15 @@
                     <!-- Quick Stats -->
                     <div class="card mb-4">
                         <div class="card-header bg-info text-white">
-                            <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>RFID Statistics</h5>
+                            <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Barcode Statistics</h5>
                         </div>
                         <div class="card-body">
                             <div class="text-center">
-                                <h3 class="text-primary mb-1">{{ \App\Models\User::whereNotNull('rfid_card')->count() }}</h3>
-                                <p class="text-muted mb-3">Users with RFID Cards</p>
+                                <h3 class="text-primary mb-1">{{ \App\Models\User::whereNotNull('barcode')->count() }}</h3>
+                                <p class="text-muted mb-3">Users with Barcodes</p>
 
-                                <h5 class="text-info mb-1">{{ \App\Models\User::whereNull('rfid_card')->count() }}</h5>
-                                <p class="text-muted">Users without RFID Cards</p>
+                                <h5 class="text-info mb-1">{{ \App\Models\User::whereNull('barcode')->count() }}</h5>
+                                <p class="text-muted">Users without Barcodes</p>
                             </div>
                         </div>
                     </div>
@@ -135,8 +131,6 @@
                             </div>
                         </div>
                     </div>
-
-
                 </div>
             </div>
         </div>
@@ -144,15 +138,15 @@
 </div>
 
 <script>
-// RFID Scanner Enhanced Interface
-class RFIDScanner {
+// Barcode Scanner Enhanced Interface
+class BarcodeScanner {
     constructor() {
-        this.rfidInput = document.getElementById('rfid_input');
+        this.barcodeInput = document.getElementById('barcode_input');
         this.scanBtn = document.getElementById('scan_btn');
         this.clearBtn = document.getElementById('clear_btn');
         this.scanStatus = document.getElementById('scan_status');
         this.autoSubmitDelay = 800; // Auto-submit after 800ms of no input
-        this.minRfidLength = 8; // Minimum RFID length to trigger lookup
+        this.minBarcodeLength = 8; // Minimum barcode length to trigger lookup
         this.autoSubmitTimer = null;
 
         this.init();
@@ -165,9 +159,9 @@ class RFIDScanner {
     }
 
     setupEventListeners() {
-        // RFID Input with real-time processing
-        this.rfidInput.addEventListener('input', (e) => {
-            this.onRfidInput(e.target.value);
+        // Barcode Input with real-time processing
+        this.barcodeInput.addEventListener('input', (e) => {
+            this.onBarcodeInput(e.target.value);
         });
 
         // Manual scan button
@@ -185,8 +179,8 @@ class RFIDScanner {
             this.handleKeyboard(e);
         });
 
-        // Enter key on RFID input
-        this.rfidInput.addEventListener('keypress', (e) => {
+        // Enter key on barcode input
+        this.barcodeInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 this.manualLookup();
@@ -194,12 +188,10 @@ class RFIDScanner {
         });
     }
 
-
-
-    onRfidInput(value) {
+    onBarcodeInput(value) {
         const cleanValue = value.replace(/[^0-9]/g, ''); // Only allow numbers
         if (cleanValue !== value) {
-            this.rfidInput.value = cleanValue;
+            this.barcodeInput.value = cleanValue;
             return;
         }
 
@@ -210,10 +202,10 @@ class RFIDScanner {
             clearTimeout(this.autoSubmitTimer);
         }
 
-        // Auto-submit if RFID looks complete
-        if (value.length >= this.minRfidLength && value.length <= 20) {
+        // Auto-submit if barcode looks complete
+        if (value.length >= this.minBarcodeLength && value.length <= 20) {
             this.autoSubmitTimer = setTimeout(() => {
-                if (this.rfidInput.value === value) { // Check if user is still not typing
+                if (this.barcodeInput.value === value) { // Check if user is still not typing
                     this.playSound('scan');
                     this.manualLookup();
                 }
@@ -221,17 +213,17 @@ class RFIDScanner {
         }
 
         // Update status based on length
-        if (value.length > 0 && value.length < this.minRfidLength) {
-            this.updateStatus(`Need ${this.minRfidLength - value.length} more characters...`, 'info');
+        if (value.length > 0 && value.length < this.minBarcodeLength) {
+            this.updateStatus(`Need ${this.minBarcodeLength - value.length} more characters...`, 'info');
         }
     }
 
     async manualLookup() {
-        const rfidCard = this.rfidInput.value.trim();
+        const barcode = this.barcodeInput.value.trim();
 
-        if (!rfidCard || rfidCard.length < this.minRfidLength) {
+        if (!barcode || barcode.length < this.minBarcodeLength) {
             this.playSound('error');
-            this.updateStatus(`Need at least ${this.minRfidLength} characters`, 'danger');
+            this.updateStatus(`Need at least ${this.minBarcodeLength} characters`, 'danger');
             setTimeout(() => {
                 this.updateStatus('Ready to scan...', 'success');
             }, 2000);
@@ -243,13 +235,13 @@ class RFIDScanner {
         this.playSound('processing');
 
         try {
-            const response = await fetch('{{ route("admin.rfid.lookup") }}', {
+            const response = await fetch('{{ route("admin.barcode.lookup") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: 'rfid_card=' + encodeURIComponent(rfidCard)
+                body: 'barcode=' + encodeURIComponent(barcode)
             });
 
             const data = await response.json();
@@ -264,7 +256,7 @@ class RFIDScanner {
                 this.updateStatus('❌ User not found', 'danger');
             }
         } catch (error) {
-            console.error('RFID Lookup Error:', error);
+            console.error('Barcode Lookup Error:', error);
             this.playSound('error');
             this.updateStatus('❌ Lookup failed', 'danger');
             setTimeout(() => {
@@ -317,8 +309,8 @@ class RFIDScanner {
     }
 
     clearAll() {
-        this.rfidInput.value = '';
-        this.rfidInput.focus();
+        this.barcodeInput.value = '';
+        this.barcodeInput.focus();
         document.getElementById('user_info').classList.add('d-none');
         document.getElementById('no_user').classList.add('d-none');
         this.updateStatus('Ready to scan...', 'success');
@@ -398,7 +390,7 @@ class RFIDScanner {
                 break;
             case 'F3':
                 e.preventDefault();
-                if (this.rfidInput.value.length >= this.minRfidLength) {
+                if (this.barcodeInput.value.length >= this.minBarcodeLength) {
                     this.manualLookup();
                 }
                 break;
@@ -411,7 +403,7 @@ class RFIDScanner {
 
     showHelp() {
         const helpMessage = `
-🆘 RFID Scanner Help:
+🆘 Barcode Scanner Help:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⌨️  Keyboard Shortcuts:
    F1 - Show this help
@@ -421,7 +413,7 @@ class RFIDScanner {
    ENTER - Lookup user
 
 📷 Scanner Usage:
-   • Point scanner at RFID card
+   • Point scanner at barcode
    • Auto-lookup when complete
    • Manual lookup with button
 
@@ -443,27 +435,25 @@ class RFIDScanner {
     }
 }
 
-
-
 // Clear scan function (global access)
 function clearScan() {
-    const rfidScanner = window.rfidScanner;
-    if (rfidScanner) {
-        rfidScanner.clearAll();
+    const barcodeScanner = window.barcodeScanner;
+    if (barcodeScanner) {
+        barcodeScanner.clearAll();
     }
 }
 
-// Initialize RFID Scanner when page loads
+// Initialize Barcode Scanner when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    const rfidScanner = new RFIDScanner();
+    const barcodeScanner = new BarcodeScanner();
 
     // Make it globally accessible for debugging
-    window.rfidScanner = rfidScanner;
+    window.barcodeScanner = barcodeScanner;
 
     // Add visual feedback for scanner input
     const style = document.createElement('style');
     style.textContent = `
-        #rfid_input:focus {
+        #barcode_input:focus {
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
             border-color: #007bff;
         }
@@ -486,8 +476,6 @@ document.addEventListener('DOMContentLoaded', function() {
         #scan_status {
             transition: all 0.3s ease;
         }
-
-
     `;
     document.head.appendChild(style);
 });

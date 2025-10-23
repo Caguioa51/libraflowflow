@@ -5,6 +5,26 @@
         </h2>
     </x-slot>
 
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.classList.remove('hidden');
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+    </script>
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="mb-4">
@@ -23,18 +43,7 @@
                     </div>
                 </div>
             </div>
-            <!-- QR Code Section -->
-            @if($user->qr_code)
-            <div class="mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center">
-                        <h5 class="card-title mb-3">My Library QR Code</h5>
-                        <img src="{{ asset('storage/' . $user->qr_code) }}" alt="QR Code" class="img-fluid mb-2" style="max-width: 200px;">
-                    </div>
-                </div>
-            </div>
-            @endif
-                {{-- QR Code section removed --}}
+
             <div class="mb-4">
                 <div class="card shadow-sm">
                     <div class="card-body">

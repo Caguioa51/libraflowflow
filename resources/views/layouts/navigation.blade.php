@@ -45,22 +45,15 @@
             <!-- User Account Dropdown -->
             <div class="dropdown ms-3">
                 <button class="btn btn-outline-light border-0 dropdown-toggle d-flex align-items-center"
-                        type="button" onclick="toggleDropdown(event)">
-                    @if(auth()->user()->profile_photo)
-                        <img src="{{ asset('storage/profile_photos/' . auth()->user()->profile_photo) }}"
-                             alt="Profile" class="rounded-circle me-2" width="24" height="24">
-                    @else
-                        <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center"
-                             style="width: 24px; height: 24px;">
-                            <i class="bi bi-person text-white" style="font-size: 12px;"></i>
-                        </div>
-                    @endif
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center"
+                         style="width: 24px; height: 24px;">
+                        <i class="bi bi-person text-white" style="font-size: 12px;"></i>
+                    </div>
                     <span class="d-none d-md-inline">{{ auth()->user()->name }}</span>
-                    <i class="bi bi-chevron-down ms-1 dropdown-arrow"></i>
                 </button>
 
-                <div id="userDropdownMenu" class="dropdown-menu dropdown-menu-end"
-                     style="display: none; min-width: 200px;">
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                     <div class="px-3 py-2 border-bottom">
                         <div class="fw-bold">{{ auth()->user()->name }}</div>
                         <small class="text-muted">{{ auth()->user()->email }}</small>

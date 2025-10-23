@@ -5,14 +5,9 @@
     <div class="row justify-content-center">
         <div class="col-lg-8 col-xl-6">
             <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="mb-1"><i class="bi bi-person-plus text-primary me-2"></i>Borrow for Student</h2>
-                    <p class="text-muted mb-0">Find a student to borrow books for them</p>
-                </div>
-                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
-                </a>
+            <div class="mb-4">
+                <h2 class="mb-1"><i class="bi bi-person-plus text-primary me-2"></i>Borrow for Student</h2>
+                <p class="text-muted mb-0">Find a student to borrow books for them</p>
             </div>
 
             <!-- Student Search Section -->
@@ -21,16 +16,16 @@
                     <h5 class="mb-0"><i class="bi bi-search me-2"></i>Find Student</h5>
                 </div>
                 <div class="card-body">
-                    <!-- RFID Search -->
+                    <!-- Barcode Search -->
                     <div class="mb-4">
-                        <h6 class="text-muted">RFID Card Scanner</h6>
+                        <h6 class="text-muted">Barcode Scanner</h6>
                         <form method="POST" action="{{ route('borrowings.admin_borrow.post') }}" class="d-inline">
                             @csrf
                             <div class="input-group">
-                                <input type="text" class="form-control" name="rfid_card"
-                                       placeholder="Scan or enter RFID card number..." required>
+                                <input type="text" class="form-control" name="barcode"
+                                       placeholder="Scan or enter barcode number..." required>
                                 <button class="btn btn-primary" type="submit">
-                                    <i class="bi bi-credit-card-2-front me-2"></i>Find by RFID
+                                    <i class="bi bi-upc-scan me-2"></i>Find by Barcode
                                 </button>
                             </div>
                         </form>
@@ -112,23 +107,35 @@
 
                                     <div class="row">
                                         <div class="col-md-8">
+                                            <label for="book_search" class="form-label">Search Books</label>
+                                            <div class="input-group mb-3">
+                                                <input type="text" class="form-control" id="book_search" placeholder="Type to search books by title or author..." autocomplete="off">
+                                                <button class="btn btn-outline-secondary" type="button" id="clear_book_search">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </div>
+
                                             <label for="book_select" class="form-label">Select Book</label>
-                                            <select class="form-select" name="book_id" id="book_select" required onchange="updateBookInfo()">
+                                            <select class="form-select" name="book_id" id="book_select" required onchange="updateBookInfo()" size="8">
                                                 <option value="">Choose a book...</option>
                                                 @foreach($books as $book)
                                                     <option value="{{ $book->id }}"
                                                             data-title="{{ $book->title }}"
                                                             data-author="{{ $book->author->name ?? 'Unknown' }}"
-                                                            data-available="{{ $book->available_quantity ?? ($book->quantity ?? 1) }}">
+                                                            data-available="{{ $book->available_quantity ?? ($book->quantity ?? 1) }}"
+                                                            data-search="{{ strtolower($book->title . ' ' . ($book->author->name ?? 'Unknown')) }}">
                                                         {{ $book->title }} by {{ $book->author->name ?? 'Unknown' }}
                                                         (Available: {{ $book->available_quantity ?? ($book->quantity ?? 1) }})
                                                     </option>
                                                 @endforeach
                                             </select>
+                                            <div class="form-text">
+                                                <span id="search_results_count">Showing all {{ count($books) }} books</span>
+                                            </div>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">&nbsp;</label>
-                                            <button type="submit" class="btn btn-success d-block w-100">
+                                            <button type="button" class="btn btn-success d-block w-100" onclick="confirmAdminBorrow()">
                                                 <i class="bi bi-check-circle me-2"></i>Borrow Selected Book
                                             </button>
                                         </div>
@@ -150,7 +157,8 @@
                     <div class="alert alert-info mt-4">
                         <h6><i class="bi bi-info-circle me-2"></i>How to use:</h6>
                         <ol class="mb-0">
-                            <li>Enter RFID card number or search for student by name/email/ID</li>
+                            <li><strong>📱 For Physical Scanner:</strong> Print student's barcode card from Settings page</li>
+                            <li><strong>⌨️ For Manual Entry:</strong> Type the barcode number (e.g., STUDENT-12345)</li>
                             <li>Click the search button to find the student</li>
                             <li>If student is found, click "Borrow Books" to proceed</li>
                             <li>On the next page, select books to borrow for the student</li>
@@ -182,20 +190,20 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('❌ Borrow Books button NOT found on page load');
     }
 
-    // RFID Form Handler
-    const rfidForm = document.getElementById('rfid-form');
-    if (rfidForm) {
-        rfidForm.addEventListener('submit', function(e) {
+    // Barcode Form Handler
+    const barcodeForm = document.getElementById('barcode-form');
+    if (barcodeForm) {
+        barcodeForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            console.log('📡 RFID form submitted');
+            console.log('📡 Barcode form submitted');
 
-            const rfidCard = document.getElementById('rfid_card').value.trim();
-            if (!rfidCard) {
-                showRfidError('Please enter an RFID card number.');
+            const barcode = document.getElementById('barcode').value.trim();
+            if (!barcode) {
+                showBarcodeError('Please enter a barcode number.');
                 return;
             }
 
-            console.log('🔍 Looking up RFID:', rfidCard);
+            console.log('🔍 Looking up barcode:', barcode);
 
             // Show loading state
             const submitBtn = this.querySelector('button[type="submit"]');
@@ -206,30 +214,30 @@ document.addEventListener('DOMContentLoaded', function() {
             clearAllResults();
 
             // Make AJAX request
-            fetch('{{ route("borrowings.admin_rfid_lookup") }}', {
+            fetch('{{ route("borrowings.admin_barcode_lookup") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({ rfid_card: rfidCard })
+                body: JSON.stringify({ barcode: barcode })
             })
             .then(response => {
-                console.log('RFID Response status:', response.status);
+                console.log('Barcode Response status:', response.status);
                 return response.json();
             })
             .then(data => {
-                console.log('RFID Response data:', data);
+                console.log('Barcode Response data:', data);
                 if (data.success) {
-                    showRfidUserInfo(data.user);
+                    showBarcodeUserInfo(data.user);
                 } else {
-                    showRfidError(data.message || 'Student not found with this RFID card.');
+                    showBarcodeError(data.message || 'Student not found with this barcode.');
                 }
             })
             .catch(error => {
-                console.error('RFID Error:', error);
-                showRfidError('Error looking up RFID card. Please try again.');
+                console.error('Barcode Error:', error);
+                showBarcodeError('Error looking up barcode. Please try again.');
             })
             .finally(() => {
                 submitBtn.innerHTML = '<i class="bi bi-search me-2"></i>Find Student';
@@ -366,10 +374,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Enter key support
-    document.getElementById('rfid_card')?.addEventListener('keypress', function(e) {
+    document.getElementById('barcode')?.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            rfidForm.dispatchEvent(new Event('submit'));
+            barcodeForm.dispatchEvent(new Event('submit'));
         }
     });
 
@@ -387,20 +395,93 @@ document.addEventListener('DOMContentLoaded', function() {
             showBookSelection();
         }
     });
+
+    // Book Search Functionality
+    const bookSearchInput = document.getElementById('book_search');
+    const bookSelect = document.getElementById('book_select');
+    const clearBookSearchBtn = document.getElementById('clear_book_search');
+    const searchResultsCount = document.getElementById('search_results_count');
+
+    if (bookSearchInput && bookSelect) {
+        // Real-time book search as user types
+        let bookSearchTimeout;
+        bookSearchInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+
+            // Clear previous timeout
+            clearTimeout(bookSearchTimeout);
+
+            // Set new timeout for debounced search
+            bookSearchTimeout = setTimeout(() => {
+                filterBooks(query);
+            }, 300); // Wait 300ms after user stops typing
+        });
+
+        // Clear search button
+        if (clearBookSearchBtn) {
+            clearBookSearchBtn.addEventListener('click', function() {
+                bookSearchInput.value = '';
+                filterBooks(''); // Show all books
+                bookSearchInput.focus();
+            });
+        }
+
+        // Show all books initially
+        filterBooks('');
+    }
+
+    function filterBooks(searchQuery) {
+        const options = bookSelect.options;
+        let visibleCount = 0;
+
+        // Skip the first option ("Choose a book...")
+        for (let i = 1; i < options.length; i++) {
+            const option = options[i];
+            const searchText = option.getAttribute('data-search') || '';
+
+            if (searchQuery === '' || searchText.includes(searchQuery)) {
+                option.style.display = 'block';
+                visibleCount++;
+            } else {
+                option.style.display = 'none';
+            }
+        }
+
+        // Update results count
+        if (searchResultsCount) {
+            if (searchQuery === '') {
+                const totalBooks = options.length - 1; // Exclude "Choose a book..." option
+                searchResultsCount.textContent = `Showing all ${totalBooks} books`;
+            } else {
+                searchResultsCount.textContent = `Found ${visibleCount} book${visibleCount !== 1 ? 's' : ''} matching "${searchQuery}"`;
+            }
+        }
+
+        // Auto-select the first visible book if there's only one result
+        if (visibleCount === 1 && searchQuery !== '') {
+            for (let i = 1; i < options.length; i++) {
+                if (options[i].style.display !== 'none') {
+                    bookSelect.selectedIndex = i;
+                    updateBookInfo();
+                    break;
+                }
+            }
+        }
+    }
 });
 
-function showRfidUserInfo(user) {
-    console.log('✅ RFID student found:', user);
+function showBarcodeUserInfo(user) {
+    console.log('✅ Barcode student found:', user);
     selectedStudent = user;
 
-    // Update RFID user display
-    document.getElementById('rfid_user_photo').src = user.profile_photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=003366&color=fff&size=128';
-    document.getElementById('rfid_user_name').textContent = user.name;
-    document.getElementById('rfid_user_email').textContent = user.email;
-    document.getElementById('rfid_user_student_id').textContent = user.student_id || 'N/A';
+    // Update barcode user display
+    document.getElementById('barcode_user_photo').src = user.profile_photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) + '&background=003366&color=fff&size=128';
+    document.getElementById('barcode_user_name').textContent = user.name;
+    document.getElementById('barcode_user_email').textContent = user.email;
+    document.getElementById('barcode_user_student_id').textContent = user.student_id || 'N/A';
 
     // Set role badge
-    const roleBadge = document.getElementById('rfid_user_role');
+    const roleBadge = document.getElementById('barcode_user_role');
     const roleColors = {
         'admin': 'danger',
         'teacher': 'warning',
@@ -409,8 +490,8 @@ function showRfidUserInfo(user) {
     roleBadge.className = `badge bg-${roleColors[user.role] || 'secondary'}`;
     roleBadge.textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
 
-    // Show RFID user info
-    document.getElementById('rfid-user-info').classList.remove('d-none');
+    // Show barcode user info
+    document.getElementById('barcode-user-info').classList.remove('d-none');
 }
 
 function showManualUserInfo(user) {
@@ -500,9 +581,9 @@ function prepareBorrowingForm(user) {
     document.getElementById('borrowing-section').classList.remove('d-none');
 }
 
-function showRfidError(message) {
-    console.log('❌ RFID Error:', message);
-    const errorDiv = document.getElementById('rfid-error-message');
+function showBarcodeError(message) {
+    console.log('❌ Barcode Error:', message);
+    const errorDiv = document.getElementById('barcode-error-message');
     errorDiv.textContent = message;
     errorDiv.classList.remove('d-none');
 }
@@ -514,11 +595,11 @@ function showSearchError(message) {
     errorDiv.classList.remove('d-none');
 }
 
-function clearRfidUser() {
-    console.log('🗑️ Clearing RFID user');
-    document.getElementById('rfid-form').reset();
-    document.getElementById('rfid-user-info').classList.add('d-none');
-    document.getElementById('rfid-error-message').classList.add('d-none');
+function clearBarcodeUser() {
+    console.log('🗑️ Clearing barcode user');
+    document.getElementById('barcode-form').reset();
+    document.getElementById('barcode-user-info').classList.add('d-none');
+    document.getElementById('barcode-error-message').classList.add('d-none');
     selectedStudent = null;
 }
 
@@ -533,11 +614,11 @@ function clearManualUser() {
 
 function clearAllResults() {
     console.log('🗑️ Clearing all results');
-    document.getElementById('rfid-user-info').classList.add('d-none');
+    document.getElementById('barcode-user-info').classList.add('d-none');
     document.getElementById('manual-user-info').classList.add('d-none');
     document.getElementById('search-results').classList.add('d-none');
     document.getElementById('borrowing-section').classList.add('d-none');
-    document.getElementById('rfid-error-message').classList.add('d-none');
+    document.getElementById('barcode-error-message').classList.add('d-none');
     document.getElementById('search-error-message').classList.add('d-none');
     selectedStudent = null;
 }
@@ -573,6 +654,28 @@ function updateBookInfo() {
     }
 }
 
+function confirmAdminBorrow() {
+    const bookSelect = document.getElementById('book_select');
+    const selectedOption = bookSelect.options[bookSelect.selectedIndex];
+
+    if (!selectedOption || !selectedOption.value) {
+        alert('Please select a book to borrow.');
+        return;
+    }
+
+    const bookTitle = selectedOption.getAttribute('data-title');
+    const bookAuthor = selectedOption.getAttribute('data-author');
+    const bookAvailable = selectedOption.getAttribute('data-available');
+
+    // Create confirmation message
+    const confirmMessage = `Are you sure you want to borrow "${bookTitle}" by ${bookAuthor}?\n\nAvailable copies: ${bookAvailable}\n\nThis action cannot be undone.`;
+
+    if (confirm(confirmMessage)) {
+        // If confirmed, submit the form
+        document.getElementById('borrow-book-form').submit();
+    }
+}
+
 function startOver() {
     console.log('🔄 Starting over');
     clearAllResults();
@@ -584,26 +687,26 @@ function startOver() {
     }
 
     // Reset all forms
-    document.getElementById('rfid-form').reset();
+    document.getElementById('barcode-form').reset();
     document.getElementById('search-form').reset();
     document.getElementById('borrow-book-form').reset();
 }
 
 // Debug functions
-function testRfidLookup() {
-    console.log('🧪 Testing RFID lookup...');
-    fetch('{{ route("borrowings.admin_rfid_lookup") }}', {
+function testBarcodeLookup() {
+    console.log('🧪 Testing barcode lookup...');
+    fetch('{{ route("borrowings.admin_barcode_lookup") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'Accept': 'application/json'
         },
-        body: JSON.stringify({ rfid_card: 'test' })
+        body: JSON.stringify({ barcode: 'test' })
     })
     .then(r => r.json())
-    .then(d => console.log('RFID test response:', d))
-    .catch(e => console.log('RFID test error:', e));
+    .then(d => console.log('Barcode test response:', d))
+    .catch(e => console.log('Barcode test error:', e));
 }
 
 function testUserSearch() {

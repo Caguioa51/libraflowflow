@@ -49,10 +49,10 @@
                                     <p class="mb-3">{{ $user->student_id ?? 'N/A' }}</p>
                                 </div>
                                 <div class="col-sm-4">
-                                    <p class="mb-1"><strong>RFID Card:</strong></p>
+                                    <p class="mb-1"><strong>Barcode:</strong></p>
                                     <p class="mb-3">
-                                        @if($user->rfid_card)
-                                            <span class="badge bg-success">{{ $user->rfid_card }}</span>
+                                        @if($user->barcode)
+                                            <span class="badge bg-success">{{ $user->barcode }}</span>
                                         @else
                                             <span class="badge bg-secondary">Not Assigned</span>
                                         @endif

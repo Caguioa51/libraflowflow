@@ -13,7 +13,7 @@ use App\Http\Controllers\SystemSettingsController;
 Route::get('/', function () {
     // Always show the public welcome page; the page itself adapts links based on auth state
     return view('welcome');
-});
+})->name('welcome');
 
 Route::get('/dashboard', function () {
     return Auth::check()
@@ -43,7 +43,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-reservations', [BookController::class, 'myReservations'])->name('books.my_reservations');
 
     // Self-service routes
-    Route::get('/self-checkout', [BorrowingController::class, 'selfCheckout'])->name('borrowings.self_checkout');
+    // Redirect old self-checkout to books page
+    Route::get('/self-checkout', function() {
+        return redirect()->route('books.index');
+    })->name('borrowings.self_checkout');
+
     Route::post('/borrowings/{borrowing}/renew', [BorrowingController::class, 'renew'])->name('borrowings.renew');
     Route::post('/borrowings/{borrowing}/pay-fine', [BorrowingController::class, 'payFine'])->name('borrowings.pay_fine');
 });
@@ -52,7 +56,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(
 
     Route::get('/admin/borrow', [\App\Http\Controllers\BorrowingController::class, 'adminBorrow'])->name('borrowings.admin_borrow');
     Route::post('/admin/borrow', [\App\Http\Controllers\BorrowingController::class, 'adminBorrow'])->name('borrowings.admin_borrow.post');
-    Route::post('/admin/borrow/rfid-lookup', [\App\Http\Controllers\BorrowingController::class, 'adminRfidLookup'])->name('borrowings.admin_rfid_lookup');
+    Route::post('/admin/borrow/barcode-lookup', [\App\Http\Controllers\BorrowingController::class, 'adminBarcodeLookup'])->name('borrowings.admin_barcode_lookup');
     Route::post('/admin/borrow/user-search', [\App\Http\Controllers\BorrowingController::class, 'adminUserSearch'])->name('borrowings.admin_user_search');
     Route::get('/admin/update-fines', [\App\Http\Controllers\BorrowingController::class, 'updateFines'])->name('borrowings.update_fines');
     Route::post('/admin/update-fines', [\App\Http\Controllers\BorrowingController::class, 'updateFines'])->name('borrowings.update_fines.post');
@@ -66,10 +70,11 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(
     Route::get('/admin/users', [\App\Http\Controllers\Admin\UserManagementController::class, 'index'])->name('admin.users.index');
     Route::get('/admin/users/{user}/borrow', [\App\Http\Controllers\Admin\UserManagementController::class, 'borrowForUser'])->name('admin.users.borrow_for_user');
     Route::get('/admin/users/{user}/history', [\App\Http\Controllers\Admin\UserManagementController::class, 'viewHistory'])->name('admin.users.view_history');
-    // RFID management for admins
-    Route::get('/admin/rfid-scan', [\App\Http\Controllers\Admin\RfidController::class, 'scan'])->name('admin.rfid.scan');
-    Route::post('/admin/rfid-lookup', [\App\Http\Controllers\Admin\RfidController::class, 'lookup'])->name('admin.rfid.lookup');
-    Route::post('/admin/assign-rfid', [\App\Http\Controllers\Admin\RfidController::class, 'assign'])->name('admin.rfid.assign');
+    Route::post('/admin/users/update-student-id', [\App\Http\Controllers\Admin\UserManagementController::class, 'updateStudentId'])->name('admin.users.update_student_id');
+    // Barcode management for admins
+    Route::get('/admin/barcode-scan', [\App\Http\Controllers\Admin\BarcodeController::class, 'scan'])->name('admin.barcode.scan');
+    Route::post('/admin/barcode-lookup', [\App\Http\Controllers\Admin\BarcodeController::class, 'lookup'])->name('admin.barcode.lookup');
+    Route::post('/admin/assign-barcode', [\App\Http\Controllers\Admin\BarcodeController::class, 'assign'])->name('admin.barcode.assign');
 });
 
 require __DIR__.'/auth.php';

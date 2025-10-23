@@ -48,9 +48,20 @@
         </div>
 
         <div>
-            <x-input-label for="student_id" :value="__('Student ID')" />
-            <x-text-input id="student_id" name="student_id" type="text" class="mt-1 block w-full" :value="old('student_id', $user->student_id)" readonly />
+            <label for="student_id" class="block text-sm font-medium text-gray-700">Student ID</label>
+            <input id="student_id"
+                   name="student_id"
+                   type="text"
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                   value="{{ old('student_id', $user->student_id) }}"
+                   style="pointer-events: auto; cursor: text; user-select: text;"
+                   autocomplete="off">
+            @error('student_id')
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+            @enderror
         </div>
+
+
 
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>

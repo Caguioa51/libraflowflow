@@ -133,10 +133,23 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($borrowing->returned_at)
-                                                    {{ \Carbon\Carbon::parse($borrowing->borrowed_at)->diffInDays(\Carbon\Carbon::parse($borrowing->returned_at)) }} days
+                                                @php
+                                                    $borrowedDate = \Carbon\Carbon::parse($borrowing->borrowed_at);
+                                                    $endDate = $borrowing->returned_at ? \Carbon\Carbon::parse($borrowing->returned_at) : now();
+                                                    $totalHours = $borrowedDate->diffInHours($endDate);
+                                                    $days = intval($totalHours / 24);
+                                                    $hours = $totalHours % 24;
+                                                @endphp
+
+                                                @if($totalHours < 1)
+                                                    < 1 hour
+                                                @elseif($days > 0)
+                                                    {{ $days }} day{{ $days > 1 ? 's' : '' }}
+                                                    @if($hours > 0)
+                                                        {{ $hours }} hour{{ $hours > 1 ? 's' : '' }}
+                                                    @endif
                                                 @else
-                                                    {{ \Carbon\Carbon::parse($borrowing->borrowed_at)->diffInDays(now()) }} days
+                                                    {{ $totalHours }} hour{{ $totalHours > 1 ? 's' : '' }}
                                                 @endif
                                             </td>
                                         </tr>

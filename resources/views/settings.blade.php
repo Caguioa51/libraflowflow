@@ -31,6 +31,7 @@
                                 <label for="student_id" class="form-label">Student ID</label>
                                 <input type="text" class="form-control" id="student_id" name="student_id" value="{{ old('student_id', $user->student_id) }}" readonly>
                             </div>
+
                             <button type="submit" class="btn btn-primary">Save Changes</button>
                         </form>
                     </div>
@@ -45,6 +46,35 @@
                         <p><b>Student ID:</b> {{ $user->student_id }}</p>
                     </div>
                 </div>
+
+                <!-- Barcode Section -->
+                @if($user->barcode)
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">Library Barcode</div>
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-upc-scan fs-1 text-primary mb-2"></i>
+                            <h5 class="mb-3">Your Library Barcode</h5>
+                            <div class="mb-3">
+                                <span class="badge bg-primary fs-4 p-3">{{ $user->barcode }}</span>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted">📱 <strong>For Physical Scanner:</strong> Print this page or copy the number above</small><br>
+                                <small class="text-muted">⌨️ <strong>For Manual Entry:</strong> Type the barcode number into the scanner</small>
+                            </div>
+                        </div>
+                        <p class="text-muted small">Use this barcode for quick checkouts and library services</p>
+                        <div class="mt-3">
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="copyBarcode('{{ $user->barcode }}')">
+                                <i class="bi bi-clipboard me-1"></i>Copy Number
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="printBarcode()">
+                                <i class="bi bi-printer me-1"></i>Print Card
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
             <div class="tab-pane fade" id="security">
                 <div class="card mb-4">
@@ -98,5 +128,128 @@
             tabTrigger.show();
         });
     });
+
+    // Copy barcode to clipboard function
+    function copyBarcode(barcode) {
+        navigator.clipboard.writeText(barcode).then(function() {
+            // Show success message
+            showAlert('success', '✅ Barcode copied to clipboard!');
+        }).catch(function(err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = barcode;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            showAlert('success', '✅ Barcode copied to clipboard!');
+        });
+    }
+
+    // Print barcode card function
+    function printBarcode() {
+        const barcode = '{{ $user->barcode }}';
+        const name = '{{ $user->name }}';
+        const studentId = '{{ $user->student_id }}';
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Library Barcode Card</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        text-align: center;
+                        padding: 20px;
+                        margin: 0;
+                    }
+                    .barcode-card {
+                        border: 2px solid #007bff;
+                        border-radius: 10px;
+                        padding: 20px;
+                        max-width: 300px;
+                        margin: 0 auto;
+                        background: white;
+                    }
+                    .barcode-number {
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #007bff;
+                        font-family: monospace;
+                        letter-spacing: 2px;
+                        margin: 20px 0;
+                        padding: 10px;
+                        background: #f8f9fa;
+                        border-radius: 5px;
+                    }
+                    .student-info {
+                        margin: 15px 0;
+                    }
+                    .instructions {
+                        font-size: 12px;
+                        color: #666;
+                        margin-top: 20px;
+                        padding-top: 15px;
+                        border-top: 1px dashed #ccc;
+                    }
+                    @media print {
+                        body { margin: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="barcode-card">
+                    <h3>Dagupan City NHS</h3>
+                    <h4>Library Card</h4>
+                    <div class="student-info">
+                        <p><strong>${name}</strong></p>
+                        <p>Student ID: ${studentId}</p>
+                    </div>
+                    <div class="barcode-number">${barcode}</div>
+                    <div class="instructions">
+                        <p>Present this card for library services</p>
+                        <p>Keep this card safe and do not share</p>
+                    </div>
+                </div>
+                <div class="no-print" style="margin-top: 20px;">
+                    <button onclick="window.print()">Print Card</button>
+                    <button onclick="window.close()">Close</button>
+                </div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+    }
+
+    // Simple alert function
+    function showAlert(type, message) {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.alert.position-fixed');
+        existingAlerts.forEach(alert => alert.remove());
+
+        // Create alert element
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        // Add to page
+        document.body.appendChild(alertDiv);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 3000);
+    }
 </script>
 @endsection

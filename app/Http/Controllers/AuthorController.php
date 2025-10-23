@@ -12,7 +12,9 @@ class AuthorController extends Controller
      */
     public function index()
     {
-        $authors = Author::paginate(10);
+        $authors = Author::has('books')
+                        ->withCount('books')
+                        ->paginate(10);
         return view('authors.index', compact('authors'));
     }
 
@@ -48,6 +50,11 @@ class AuthorController extends Controller
      */
     public function show(Author $author)
     {
+        $author->load(['books' => function($query) {
+            $query->with(['author', 'category'])
+                  ->orderBy('title');
+        }]);
+
         return view('authors.show', compact('author'));
     }
 
