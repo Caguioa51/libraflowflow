@@ -322,6 +322,12 @@
                                                             <i class="fas fa-edit me-2"></i>Edit Student ID
                                                         </button>
                                                     </li>
+                                                    <li>
+                                                        <button class="dropdown-item text-info" type="button"
+                                                                onclick="editRfid({{ $user->id }}, '{{ $user->barcode }}', '{{ $user->name }}')">
+                                                            <i class="fas fa-id-card me-2"></i>Edit RFID Card
+                                                        </button>
+                                                    </li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -644,6 +650,116 @@ function confirmStudentIdUpdate(userId, userName) {
     // Close modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('studentIdModal'));
     modal.hide();
+}
+
+function editRfid(userId, currentRfid, userName) {
+    // Create a modal for editing RFID
+    const modalHtml = `
+        <div class="modal fade" id="rfidModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-id-card me-2"></i>Edit RFID Card
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">Editing RFID card for: <strong>${userName}</strong></p>
+                        <div class="mb-3">
+                            <label class="form-label">Current RFID Card:</label>
+                            <input type="text" class="form-control" value="${currentRfid || 'Not set'}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New RFID Card:</label>
+                            <input type="text" class="form-control" id="newRfid" placeholder="Enter new RFID card number (leave empty to remove)">
+                            <div class="form-text">RFID cards are unique identifiers for library access</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="confirmRfidUpdate(${userId}, '${userName}')">
+                            <i class="bi bi-check me-1"></i>Update
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('rfidModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('rfidModal'));
+    modal.show();
+
+    // Focus on input
+    setTimeout(() => {
+        document.getElementById('newRfid').focus();
+    }, 500);
+}
+
+function confirmRfidUpdate(userId, userName) {
+    const newRfid = document.getElementById('newRfid').value.trim();
+
+    if (newRfid === '') {
+        updateRfid(userId, null, userName);
+    } else {
+        updateRfid(userId, newRfid, userName);
+    }
+
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('rfidModal'));
+    modal.hide();
+}
+
+function updateRfid(userId, newRfid, userName) {
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Updating...';
+    button.disabled = true;
+
+    // Make AJAX request to update RFID
+    fetch('{{ route("admin.users.update_rfid") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            rfid_card: newRfid
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', `✅ RFID card updated successfully for ${userName}`);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showAlert('danger', `❌ Error: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', '❌ Failed to update RFID card. Please try again.');
+    })
+    .finally(() => {
+        // Reset button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
 }
 
 function updateStudentId(userId, newStudentId, userName) {

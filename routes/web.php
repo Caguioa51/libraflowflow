@@ -71,6 +71,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(
     Route::get('/admin/users/{user}/borrow', [\App\Http\Controllers\Admin\UserManagementController::class, 'borrowForUser'])->name('admin.users.borrow_for_user');
     Route::get('/admin/users/{user}/history', [\App\Http\Controllers\Admin\UserManagementController::class, 'viewHistory'])->name('admin.users.view_history');
     Route::post('/admin/users/update-student-id', [\App\Http\Controllers\Admin\UserManagementController::class, 'updateStudentId'])->name('admin.users.update_student_id');
+    Route::post('/admin/users/update-rfid', [\App\Http\Controllers\Admin\UserManagementController::class, 'updateRfid'])->name('admin.users.update_rfid');
     // Barcode management for admins
     Route::get('/admin/barcode-scan', [\App\Http\Controllers\Admin\BarcodeController::class, 'scan'])->name('admin.barcode.scan');
     Route::post('/admin/barcode-lookup', [\App\Http\Controllers\Admin\BarcodeController::class, 'lookup'])->name('admin.barcode.lookup');

@@ -146,4 +146,64 @@ class UserManagementController extends Controller
             ]);
         }
     }
+
+    public function updateRfid(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'rfid_card' => 'nullable|string|max:255|unique:users,barcode'
+        ]);
+
+        try {
+            $user = User::findOrFail($request->user_id);
+
+            // Check if the new RFID is already taken by another user
+            if ($request->rfid_card) {
+                $existingUser = User::where('barcode', $request->rfid_card)
+                                   ->where('id', '!=', $user->id)
+                                   ->first();
+
+                if ($existingUser) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This RFID card is already assigned to ' . $existingUser->name
+                    ]);
+                }
+            }
+
+            $oldRfid = $user->barcode;
+            $user->update(['barcode' => $request->rfid_card]);
+
+            // Log the change for audit purposes
+            \Log::info('Admin updated RFID card', [
+                'admin_id' => auth()->id(),
+                'admin_name' => auth()->user()->name,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'old_rfid' => $oldRfid,
+                'new_rfid' => $request->rfid_card
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'RFID card updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to update RFID card', [
+                'error' => $e->getMessage(),
+                'user_id' => $request->user_id,
+                'admin_id' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update RFID card. Please try again.'
+            ]);
+        }
+    }
 }
