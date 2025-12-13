@@ -473,4 +473,4 @@ class BorrowingController extends Controller
         $book = Book::find($validated['book_id']);
         $available = is_null($book->available_quantity) ? ($book->quantity ?? 1) : $book->available_quantity;
         if ($book->status !== 'available' || $available <= 0) {
-            return response()->json(['success' => false,
+            return response()->json(['success' => false, 'message' => '
