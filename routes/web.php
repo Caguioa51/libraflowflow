@@ -76,6 +76,11 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(
     Route::get('/admin/barcode-scan', [\App\Http\Controllers\Admin\BarcodeController::class, 'scan'])->name('admin.barcode.scan');
     Route::post('/admin/barcode-lookup', [\App\Http\Controllers\Admin\BarcodeController::class, 'lookup'])->name('admin.barcode.lookup');
     Route::post('/admin/assign-barcode', [\App\Http\Controllers\Admin\BarcodeController::class, 'assign'])->name('admin.barcode.assign');
+
+    // RFID management for admins
+    Route::get('/admin/rfid/scan', [\App\Http\Controllers\Admin\RfidController::class, 'scan'])->name('admin.rfid.scan');
+    Route::post('/admin/rfid/lookup', [\App\Http\Controllers\Admin\RfidController::class, 'lookup'])->name('admin.rfid.lookup');
+    Route::post('/admin/rfid/assign', [\App\Http\Controllers\Admin\RfidController::class, 'assign'])->name('admin.rfid.assign');
 });
 
 require __DIR__.'/auth.php';

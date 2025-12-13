@@ -23,8 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropIndex(['rfid_card']);
-            $table->dropColumn('rfid_card');
+            $table->dropIndex(['barcode']);
+            $table->dropColumn('barcode');
         });
     }
 };

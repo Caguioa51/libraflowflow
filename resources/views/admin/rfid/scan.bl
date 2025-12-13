@@ -1,0 +1,476 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-credit-card-2-front me-2"></i>RFID Scanner - Auto Mode</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">RFID Scan</li>
+                    </ol>
+                </nav>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-credit-card-2-front me-2"></i>Automatic RFID Scanner</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Automatic Mode Active!</strong> Simply scan your RFID card and it will automatically lookup the user.
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="rfid_input" class="form-label">RFID Card Scanner</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-lg" id="rfid_input"
+                                           placeholder="📡 SCAN RFID CARD HERE - Auto Lookup Active"
+                                           autocomplete="off" autofocus readonly
+                                           style="border: 2px solid #28a745; background-color: #f8fff9;">
+                                    <button class="btn btn-success" type="button" id="clear_btn">
+                                        <i class="bi bi-arrow-clockwise"></i> Clear
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <span class="badge bg-success">✅ AUTO MODE</span>
+                                    <span class="text-muted ms-2">• Scan RFID card - automatic lookup • No button pressing needed • Works with any RFID format</span>
+                                </div>
+
+                                <!-- Status Indicator -->
+                                <div id="scan_status" class="mt-2">
+                                    <small class="text-success">
+                                        <i class="bi bi-wifi me-1"></i>
+                                        <strong>SCANNER READY - Waiting for RFID card...</strong>
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- User Info Display -->
+                            <div id="user_info" class="d-none">
+                                <h5>✅ User Found:</h5>
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-3 text-center">
+                                                <img id="user_photo" src="" alt="Profile" class="rounded-circle mb-3" width="80" height="80">
+                                                <h6 id="user_name" class="mb-0"></h6>
+                                                <small id="user_role" class="text-muted"></small>
+                                            </div>
+                                            <div class="col-md-9">
+                                                <div class="row">
+                                                    <div class="col-sm-6">
+                                                        <p class="mb-1"><strong>Email:</strong></p>
+                                                        <p id="user_email" class="mb-3"></p>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <p class="mb-1"><strong>Student ID:</strong></p>
+                                                        <p id="user_student_id" class="mb-3"></p>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <button class="btn btn-success" id="borrow_for_user">
+                                                        <i class="bi bi-person-plus me-2"></i>Borrow Books for this User
+                                                    </button>
+                                                    <button class="btn btn-info" id="view_history">
+                                                        <i class="bi bi-clock-history me-2"></i>View Borrowing History
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- No User Found -->
+                            <div id="no_user" class="d-none">
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>❌ No user found with this RFID card.</strong>
+                                    <br>
+                                    <span id="no_user_message"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Quick Stats -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>RFID Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center">
+                                <h3 class="text-primary mb-1">{{ \App\Models\User::whereNotNull('barcode')->count() }}</h3>
+                                <p class="text-muted mb-3">Users with RFID Cards</p>
+
+                                <h5 class="text-info mb-1">{{ \App\Models\User::whereNull('barcode')->count() }}</h5>
+                                <p class="text-muted">Users without RFID Cards</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{{ route('admin.users.index') }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-people me-2"></i>Manage Users
+                                </a>
+
+                                <button class="btn btn-outline-secondary" onclick="clearScan()">
+                                    <i class="bi bi-x-circle me-2"></i>Clear Scan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Automatic RFID Scanner - No Button Required
+class AutoRFIDScanner {
+    constructor() {
+        this.rfidInput = document.getElementById('rfid_input');
+        this.clearBtn = document.getElementById('clear_btn');
+        this.scanStatus = document.getElementById('scan_status');
+        this.autoSubmitDelay = 300; // Much faster - 300ms
+        this.minRfidLength = 3; // Lower minimum to catch any scan
+        this.autoSubmitTimer = null;
+        this.lastScanValue = '';
+
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.updateStatus('🟢 SCANNER READY - Waiting for RFID card...', 'success');
+        // Auto-focus the input
+        this.rfidInput.focus();
+    }
+
+    setupEventListeners() {
+        // RFID Input - triggers on every character change
+        this.rfidInput.addEventListener('input', (e) => {
+            this.onRfidInput(e.target.value);
+        });
+
+        // Clear button
+        this.clearBtn.addEventListener('click', () => {
+            this.clearAll();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            this.handleKeyboard(e);
+        });
+    }
+
+    onRfidInput(value) {
+        // Remove any formatting characters but keep alphanumeric
+        const cleanValue = value.replace(/[^a-zA-Z0-9]/g, '');
+        if (cleanValue !== value) {
+            this.rfidInput.value = cleanValue;
+            return;
+        }
+
+        // Don't process if value is same as last processed
+        if (cleanValue === this.lastScanValue) {
+            return;
+        }
+
+        this.updateStatus(`🔍 Scanning RFID: ${cleanValue} (${cleanValue.length} chars)`, 'warning');
+
+        // Clear previous timer
+        if (this.autoSubmitTimer) {
+            clearTimeout(this.autoSubmitTimer);
+        }
+
+        // Auto-submit immediately if we have a good length
+        if (cleanValue.length >= this.minRfidLength) {
+            this.autoSubmitTimer = setTimeout(() => {
+                if (this.rfidInput.value === cleanValue) {
+                    this.lastScanValue = cleanValue;
+                    this.playSound('scan');
+                    this.manualLookup();
+                }
+            }, this.autoSubmitDelay);
+        }
+
+        // Show current scan progress
+        if (cleanValue.length > 0 && cleanValue.length < this.minRfidLength) {
+            this.updateStatus(`🔍 Scanning... (${cleanValue.length} characters)`, 'info');
+        }
+    }
+
+    async manualLookup() {
+        const rfidCard = this.rfidInput.value.trim();
+
+        if (!rfidCard || rfidCard.length < this.minRfidLength) {
+            this.playSound('error');
+            this.updateStatus('❌ Invalid RFID card', 'danger');
+            setTimeout(() => {
+                this.updateStatus('🟢 SCANNER READY - Waiting for RFID card...', 'success');
+            }, 2000);
+            return;
+        }
+
+        this.setLoading(true);
+        this.updateStatus('🔍 Looking up user...', 'warning');
+        this.playSound('processing');
+
+        try {
+            const response = await fetch('{{ route("admin.rfid.lookup") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: 'rfid_card=' + encodeURIComponent(rfidCard)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showUserInfo(data.user);
+                this.playSound('success');
+                this.updateStatus(`✅ User found: ${data.user.name}`, 'success');
+
+                // Auto-clear after 3 seconds to prepare for next scan
+                setTimeout(() => {
+                    this.clearAll();
+                }, 3000);
+            } else {
+                this.showNoUser(data.message);
+                this.playSound('error');
+                this.updateStatus('❌ User not found - Clear and scan again', 'danger');
+            }
+        } catch (error) {
+            console.error('RFID Lookup Error:', error);
+            this.playSound('error');
+            this.updateStatus('❌ Lookup failed - Check connection', 'danger');
+            setTimeout(() => {
+                this.updateStatus('🟢 SCANNER READY - Waiting for RFID card...', 'success');
+            }, 3000);
+        } finally {
+            this.setLoading(false);
+        }
+    }
+
+    showUserInfo(user) {
+        const userInfo = document.getElementById('user_info');
+        const noUser = document.getElementById('no_user');
+
+        userInfo.classList.remove('d-none');
+        noUser.classList.add('d-none');
+
+        // Populate user data
+        document.getElementById('user_photo').src = user.profile_photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name);
+        document.getElementById('user_name').textContent = user.name;
+        document.getElementById('user_email').textContent = user.email;
+        document.getElementById('user_student_id').textContent = user.student_id || 'N/A';
+
+        const roleBadge = document.getElementById('user_role');
+        const roleColors = {
+            'admin': 'danger',
+            'teacher': 'warning',
+            'student': 'info'
+        };
+        roleBadge.className = `badge bg-${roleColors[user.role] || 'secondary'}`;
+        roleBadge.textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+
+        // Setup button actions
+        document.getElementById('borrow_for_user').onclick = function() {
+            window.location.href = '{{ route("admin.users.borrow_for_user", "") }}/' + user.id;
+        };
+
+        document.getElementById('view_history').onclick = function() {
+            window.location.href = '{{ route("admin.users.view_history", "") }}/' + user.id;
+        };
+    }
+
+    showNoUser(message) {
+        const userInfo = document.getElementById('user_info');
+        const noUser = document.getElementById('no_user');
+
+        userInfo.classList.add('d-none');
+        noUser.classList.remove('d-none');
+        document.getElementById('no_user_message').textContent = message;
+    }
+
+    clearAll() {
+        this.rfidInput.value = '';
+        this.lastScanValue = '';
+        this.rfidInput.focus();
+        document.getElementById('user_info').classList.add('d-none');
+        document.getElementById('no_user').classList.add('d-none');
+        this.updateStatus('🟢 SCANNER READY - Waiting for RFID card...', 'success');
+        this.playSound('clear');
+
+        if (this.autoSubmitTimer) {
+            clearTimeout(this.autoSubmitTimer);
+        }
+    }
+
+    setLoading(loading) {
+        this.clearBtn.disabled = loading;
+        this.clearBtn.innerHTML = loading
+            ? '<i class="bi bi-hourglass-split me-1"></i>Searching...'
+            : '<i class="bi bi-arrow-clockwise"></i> Clear';
+    }
+
+    updateStatus(message, type) {
+        const statusEl = this.scanStatus;
+        if (!statusEl) return;
+
+        const icons = {
+            success: 'bi-circle-fill text-success',
+            warning: 'bi-circle-fill text-warning',
+            danger: 'bi-circle-fill text-danger',
+            info: 'bi-circle-fill text-info'
+        };
+
+        const iconClass = icons[type] || icons.info;
+        statusEl.innerHTML = `<small><i class="${iconClass} me-1"></i><strong>${message}</strong></small>`;
+    }
+
+    playSound(type) {
+        // Create audio context for beep sounds
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            const sounds = {
+                success: { freq: 800, duration: 300, volume: 0.2 },
+                error: { freq: 400, duration: 400, volume: 0.3 },
+                processing: { freq: 600, duration: 150, volume: 0.1 },
+                scan: { freq: 1000, duration: 200, volume: 0.15 },
+                clear: { freq: 300, duration: 150, volume: 0.1 }
+            };
+
+            const sound = sounds[type] || sounds.processing;
+
+            oscillator.frequency.setValueAtTime(sound.freq, audioContext.currentTime);
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(sound.volume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + sound.duration / 1000);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + sound.duration / 1000);
+        } catch (e) {
+            console.log('Audio not supported');
+        }
+    }
+
+    handleKeyboard(e) {
+        // Keyboard shortcuts
+        switch(e.key) {
+            case 'Escape':
+                e.preventDefault();
+                this.clearAll();
+                break;
+            case 'F1':
+                e.preventDefault();
+                this.showHelp();
+                break;
+        }
+    }
+
+    showHelp() {
+        const helpMessage = `
+🤖 AUTOMATIC RFID SCANNER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔄 AUTO MODE FEATURES:
+   • NO BUTTON PRESSING REQUIRED
+   • INSTANT SCAN DETECTION
+   • SUPPORTS ALL RFID FORMATS
+   • AUTO-CLEAR AFTER SUCCESS
+
+⌨️  KEYBOARD SHORTCUTS:
+   ESC - Clear scanner
+   F1 - Show this help
+
+📷 HOW TO USE:
+   1. Make sure RFID input is focused
+   2. Simply scan RFID card
+   3. Automatic lookup happens instantly
+   4. User info displays immediately
+   5. Auto-clear after 3 seconds
+
+🔊 AUDIO FEEDBACK:
+   🔊 Scan beep - Card detected
+   ✅ Success beep - User found
+   ❌ Error beep - User not found
+   🔄 Clear beep - Scanner reset
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        `.trim();
+
+        alert(helpMessage);
+    }
+}
+
+// Clear scan function (global access)
+function clearScan() {
+    const rfidScanner = window.rfidScanner;
+    if (rfidScanner) {
+        rfidScanner.clearAll();
+    }
+}
+
+// Initialize Auto RFID Scanner when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const rfidScanner = new AutoRFIDScanner();
+
+    // Make it globally accessible for debugging
+    window.rfidScanner = rfidScanner;
+
+    // Add visual feedback styles
+    const style = document.createElement('style');
+    style.textContent = `
+        #rfid_input {
+            font-size: 1.1em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        #rfid_input:focus {
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.5);
+            border-color: #28a745;
+        }
+
+        #scan_status {
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Show welcome message
+    setTimeout(() => {
+        rfidScanner.showHelp();
+    }, 1000);
+});
+</script>
+@endsection

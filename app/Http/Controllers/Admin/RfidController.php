@@ -27,7 +27,7 @@ class RfidController extends Controller
             'rfid_card' => 'required|string'
         ]);
 
-        $user = User::where('rfid_card', $request->rfid_card)->first();
+        $user = User::where('barcode', $request->rfid_card)->first();
 
         if (!$user) {
             return response()->json([
@@ -57,14 +57,12 @@ class RfidController extends Controller
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'rfid_card' => 'required|string|unique:users,rfid_card'
+            'rfid_card' => 'required|string|unique:users,barcode'
         ]);
 
         $user = User::findOrFail($request->user_id);
-        $user->update(['rfid_card' => $request->rfid_card]);
+        $user->update(['barcode' => $request->rfid_card]);
 
         return redirect()->back()->with('success', 'RFID card assigned successfully to ' . $user->name);
     }
-
-
 }
