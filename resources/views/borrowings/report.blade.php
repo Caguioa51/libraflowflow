@@ -19,18 +19,15 @@
 
             <!-- Summary Cards -->
             <div class="row mb-4">
-                <div class="col-12">
-                    <h4 class="mb-3 text-muted">
-                        <i class="fas fa-info-circle text-info"></i>
-                        Library Summary
+                <div class="col-12 mb-3">
+                    <h4 class="text-muted">
+                        <i class="fas fa-info-circle text-info"></i> Library Summary
                     </h4>
                 </div>
-            </div>
 
-            <div class="row mb-4">
                 <!-- Total Books Card -->
                 <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 mb-3">
-                    <div class="card border-primary h-100">
+                    <div class="card h-100 border-primary">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-book text-primary fs-2 me-3"></i>
@@ -45,7 +42,7 @@
 
                 <!-- Available Books Card -->
                 <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 mb-3">
-                    <div class="card border-success h-100">
+                    <div class="card h-100 border-success">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-check-circle text-success fs-2 me-3"></i>
@@ -60,7 +57,7 @@
 
                 <!-- Currently Borrowed Card -->
                 <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 mb-3">
-                    <div class="card border-warning h-100">
+                    <div class="card h-100 border-warning">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-user-clock text-warning fs-2 me-3"></i>
@@ -75,7 +72,7 @@
 
                 <!-- Overdue Books Card -->
                 <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 mb-3">
-                    <div class="card border-danger h-100">
+                    <div class="card h-100 border-danger">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-exclamation-triangle text-danger fs-2 me-3"></i>
@@ -88,8 +85,6 @@
                     </div>
                 </div>
             </div>
-
-
 
             <!-- Borrowing Records Table -->
             <div class="row">
@@ -112,6 +107,7 @@
                                             <th>Returned Date</th>
                                             <th>Status</th>
                                             <th>Duration</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -140,7 +136,7 @@
                                                     $days = intval($totalHours / 24);
                                                     $hours = $totalHours % 24;
                                                 @endphp
-
+                                                
                                                 @if($totalHours < 1)
                                                     < 1 hour
                                                 @elseif($days > 0)
@@ -152,20 +148,32 @@
                                                     {{ $totalHours }} hour{{ $totalHours > 1 ? 's' : '' }}
                                                 @endif
                                             </td>
+                                            <td>
+                                                @if(auth()->user()->isAdmin())
+                                                    @if($borrowing->status === 'borrowed')
+                                                    <form action="{{ route('borrowings.mark-as-returned', $borrowing) }}" method="POST" style="display:inline-block">
+                                                        @csrf
+                                                        <button class="btn btn-success btn-sm" onclick="return confirm('Mark this book as returned?')">
+                                                            <i class="fas fa-check"></i> Mark as Returned
+                                                        </button>
+                                                    </form>
+                                                    @endif
+                                                @endif
+                                            </td>
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted py-4">
-                                                <i class="fas fa-inbox fs-1 mb-2"></i>
+                                            <td colspan="7" class="text-center py-4">
+                                                <i class="fas fa-inbox fs-1 mb-2 text-muted"></i>
                                                 <br>
-                                                No borrowing records found
+                                                <p class="text-muted">No borrowing records found</p>
                                             </td>
                                         </tr>
                                         @endforelse
                                     </tbody>
                                 </table>
                             </div>
-
+                            
                             @if($borrowings->hasPages())
                             <div class="mt-3">
                                 {{ $borrowings->links() }}

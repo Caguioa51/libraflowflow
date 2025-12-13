@@ -150,6 +150,13 @@
                                                                 <i class="bi bi-arrow-repeat"></i>
                                                             </button>
                                                         </form>
+                                                        <form method="POST" action="{{ route('borrowings.mark-as-returned', $borrowing) }}" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-outline-success" 
+                                                                    title="Mark as Returned" onclick="return confirm('Mark this book as returned?')">
+                                                                <i class="bi bi-check-circle"></i>
+                                                            </button>
+                                                        </form>
                                                         @if($borrowing->fine_amount > 0)
                                                             <form method="POST" action="{{ route('borrowings.pay-fine', $borrowing) }}" class="d-inline">
                                                                 @csrf
