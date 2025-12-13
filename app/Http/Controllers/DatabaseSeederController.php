@@ -17,10 +17,8 @@ class DatabaseSeederController extends Controller
      */
     public function index()
     {
-        // Only allow access in development environment or with admin authentication
-        if (app()->environment('production')) {
-            return redirect('/')->with('error', 'Database seeding is not available in production.');
-        }
+        // Temporarily allow access in production for initial setup
+        // REMOVE THIS COMMENT AFTER SEEDING IS COMPLETE
 
         $users = User::count();
         $books = Book::count();
@@ -35,10 +33,6 @@ class DatabaseSeederController extends Controller
      */
     public function runAllSeeders(Request $request)
     {
-        if (app()->environment('production')) {
-            return redirect('/')->with('error', 'Database seeding is not available in production.');
-        }
-
         try {
             // Run AdminUserSeeder
             $this->runAdminUserSeeder();
@@ -112,7 +106,7 @@ class DatabaseSeederController extends Controller
             // Biology (5 books)
             ['title' => 'Campbell Biology', 'author' => 'Reece, Urry, Cain, Wasserman', 'genre' => 'Biology', 'quantity' => 7],
             ['title' => 'Human Anatomy and Physiology', 'author' => 'Gerard J. Tortora', 'genre' => 'Biology', 'quantity' => 6],
-            ['title' => 'Molecular Biology of the Cell', 'author' => 'Bruce Alberts', 'genre' => 'Biology', 'quantity' => 3],
+            ['title' => 'Molecular Biology of the Cell', 'author' => 'Bruce Alberms', 'genre' => 'Biology', 'quantity' => 3],
             ['title' => 'General Microbiology', 'author' => 'Tortora, Funke, Case', 'genre' => 'Biology', 'quantity' => 4],
             ['title' => 'Ecology: Concepts and Applications', 'author' => 'Manuel Molles', 'genre' => 'Biology', 'quantity' => 3],
 
@@ -220,10 +214,6 @@ class DatabaseSeederController extends Controller
      */
     public function runAdminSeeder(Request $request)
     {
-        if (app()->environment('production')) {
-            return redirect('/')->with('error', 'Database seeding is not available in production.');
-        }
-
         try {
             $result = $this->runAdminUserSeeder();
             return redirect()->route('database-seeder.index')->with('success', "Admin seeder completed: {$result}");
@@ -237,10 +227,6 @@ class DatabaseSeederController extends Controller
      */
     public function runBooksSeeder(Request $request)
     {
-        if (app()->environment('production')) {
-            return redirect('/')->with('error', 'Database seeding is not available in production.');
-        }
-
         try {
             $result = $this->runRealBooksSeeder();
             return redirect()->route('database-seeder.index')->with('success', "Books seeder completed: {$result}");
@@ -254,10 +240,6 @@ class DatabaseSeederController extends Controller
      */
     public function runSettingsSeeder(Request $request)
     {
-        if (app()->environment('production')) {
-            return redirect('/')->with('error', 'Database seeding is not available in production.');
-        }
-
         try {
             $result = $this->runSystemSettingsSeeder();
             return redirect()->route('database-seeder.index')->with('success', "Settings seeder completed: {$result}");
