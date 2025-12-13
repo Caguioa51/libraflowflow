@@ -58,7 +58,6 @@ class BorrowingController extends Controller
             return redirect()->back()->with('error', "You can only borrow up to {$maxBooks} books at a time.");
         }
 
-
         // Check if book is available and has copies
         $book = Book::find($validated['book_id']);
         $available = is_null($book->available_quantity) ? ($book->quantity ?? 1) : $book->available_quantity;
@@ -69,7 +68,7 @@ class BorrowingController extends Controller
         $borrowingDuration = SystemSetting::get('borrowing_duration_days', 14);
 
         // Use transaction to ensure borrow and inventory update happen together
-    \DB::beginTransaction();
+        \DB::beginTransaction();
         try {
             $borrowing = Borrowing::create([
                 'user_id' => $validated['user_id'],
@@ -134,7 +133,7 @@ class BorrowingController extends Controller
             return redirect()->route('dashboard')->with('error', 'Unauthorized.');
         }
         // Use transaction to mark returned and adjust inventory
-    \DB::beginTransaction();
+        \DB::beginTransaction();
         try {
             $borrowing->update([
                 'returned_at' => now(),
@@ -157,6 +156,45 @@ class BorrowingController extends Controller
         }
 
         return redirect()->route('borrowings.index')->with('success', 'Book returned successfully.');
+    }
+
+    /**
+     * Mark borrowing as returned (dedicated method for "Mark as Returned" functionality)
+     */
+    public function markAsReturned(Borrowing $borrowing)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('dashboard')->with('error', 'Unauthorized.');
+        }
+
+        if ($borrowing->status === 'returned') {
+            return redirect()->back()->with('error', 'This book has already been returned.');
+        }
+
+        // Use transaction to mark returned and adjust inventory
+        \DB::beginTransaction();
+        try {
+            $borrowing->update([
+                'returned_at' => now(),
+                'status' => 'returned',
+            ]);
+
+            $book = $borrowing->book;
+            $quantity = $book->quantity ?? 1;
+            $available = is_null($book->available_quantity) ? 0 : $book->available_quantity;
+            $newAvailable = min($quantity, $available + 1);
+            $book->available_quantity = $newAvailable;
+            // If at least one copy is available, mark status available
+            $book->status = $newAvailable > 0 ? 'available' : $book->status;
+            $book->save();
+
+            \DB::commit();
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to process return. Please try again.');
+        }
+
+        return redirect()->back()->with('success', 'Book marked as returned successfully.');
     }
 
     /**
@@ -435,114 +473,4 @@ class BorrowingController extends Controller
         $book = Book::find($validated['book_id']);
         $available = is_null($book->available_quantity) ? ($book->quantity ?? 1) : $book->available_quantity;
         if ($book->status !== 'available' || $available <= 0) {
-            return response()->json(['success' => false, 'message' => 'Not available'], 409);
-        }
-
-        \DB::beginTransaction();
-        try {
-            $borrowing = Borrowing::create([
-                'user_id' => $userId,
-                'book_id' => $book->id,
-                'borrowed_at' => now(),
-                'status' => 'borrowed',
-                'due_date' => now()->addDays(SystemSetting::get('borrowing_duration_days', 14)),
-            ]);
-            $newAvailable = max(0, ($available - 1));
-            $book->available_quantity = $newAvailable;
-            $book->status = $newAvailable <= 0 ? 'borrowed' : 'available';
-            $book->save();
-            \DB::commit();
-            return response()->json(['success' => true, 'borrowing_id' => $borrowing->id], 201);
-        } catch (\Exception $e) {
-            \DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Failed'], 500);
-        }
-    }
-
-    /**
-     * Self-service checkout for students
-     */
-    public function selfCheckout()
-    {
-        if (auth()->user()->isAdmin()) {
-            return redirect()->route('dashboard')->with('error', 'Admins cannot use self-service checkout.');
-        }
-
-        if (!SystemSetting::get('self_service_enabled', true)) {
-            return redirect()->route('dashboard')->with('error', 'Self-service checkout is currently disabled.');
-        }
-
-        $books = Book::where('status', 'available')
-            ->whereNotNull('author_id')
-            ->whereNotNull('category_id')
-            ->with(['author', 'category'])
-            ->get();
-        return view('borrowings.self_checkout', compact('books'));
-    }
-
-    /**
-     * Renew a borrowed book
-     */
-    public function renew(Borrowing $borrowing)
-    {
-        // Check if user owns this borrowing or is admin
-        if ($borrowing->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            return redirect()->back()->with('error', 'Unauthorized.');
-        }
-
-        if (!$borrowing->canRenew()) {
-            $maxRenewals = SystemSetting::get('max_renewals', 2);
-            return redirect()->back()->with('error', "This book cannot be renewed. Maximum renewals ({$maxRenewals}) reached.");
-        }
-
-        if ($borrowing->renew()) {
-            return redirect()->back()->with('success', 'Book renewed successfully! New due date: ' . $borrowing->due_date->format('M d, Y'));
-        }
-
-        return redirect()->back()->with('error', 'Failed to renew book.');
-    }
-
-    /**
-     * Pay fine for overdue book
-     */
-    public function payFine(Borrowing $borrowing)
-    {
-        // Check if user owns this borrowing or is admin
-        if ($borrowing->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            return redirect()->back()->with('error', 'Unauthorized.');
-        }
-
-        if ($borrowing->fine_amount <= 0) {
-            return redirect()->back()->with('error', 'No fine to pay for this book.');
-        }
-
-        $borrowing->update([
-            'fine_paid' => true,
-            'fine_amount' => 0,
-        ]);
-
-        return redirect()->back()->with('success', 'Fine paid successfully!');
-    }
-
-    /**
-     * Update fine amounts for all overdue books
-     */
-    public function updateFines()
-    {
-        if (!auth()->user()->isAdmin()) {
-            return redirect()->back()->with('error', 'Unauthorized.');
-        }
-
-        $overdueBorrowings = Borrowing::where('status', 'borrowed')
-            ->where('due_date', '<', now())
-            ->get();
-
-        $updatedCount = 0;
-        foreach ($overdueBorrowings as $borrowing) {
-            $borrowing->updateFine();
-            $updatedCount++;
-        }
-
-        return redirect()->back()->with('success', "Updated fines for {$updatedCount} overdue books.");
-    }
-}
+            return response()->json(['success' => false,
