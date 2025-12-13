@@ -101,7 +101,7 @@
                                                     </button>
                                                 </form>
                                             @endif
-                                            
+
                                             @if($fineAmount > 0 && !$borrowing->fine_paid)
                                                 <form method="POST" action="{{ route('borrowings.pay_fine', $borrowing) }}" class="d-inline">
                                                     @csrf
@@ -183,4 +183,4 @@
         {{ $borrowings->links() }}
     </div>
 </div>
-@endsection 
+@endsection

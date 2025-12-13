@@ -106,10 +106,9 @@
                     <div class="card-body">
                         <p class="mb-3">You are currently logged in as <strong>{{ auth()->user()->name }}</strong> ({{ auth()->user()->email }}).</p>
                         <p class="mb-4">Click the button below to securely log out of your account.</p>
-                        <a class="btn btn-danger btn-lg" href="{{ route('logout') }}"
-                           onclick="event.preventDefault(); document.getElementById('logout-form-settings').submit();">
+                        <button type="button" class="btn btn-danger btn-lg" onclick="document.getElementById('logout-form-settings').submit();">
                             <i class="bi bi-box-arrow-right me-2"></i>Logout
-                        </a>
+                        </button>
                         <form id="logout-form-settings" method="POST" action="{{ route('logout') }}" style="display: none;">
                             @csrf
                         </form>

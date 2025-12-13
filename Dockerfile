@@ -72,13 +72,13 @@ set -e
 php artisan config:cache
 php artisan migrate --force
 php artisan storage:link
-if [ "\" = "true" ]; then
+if [ "${SEED_ADMIN_USER:-false}" = "true" ]; then
     php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder --force
 fi
-if [ "\" = "true" ]; then
+if [ "${SEED_REAL_BOOKS:-false}" = "true" ]; then
     php artisan db:seed --class=Database\\Seeders\\RealBooksSeeder --force
 fi
-if [ "\" = "true" ]; then
+if [ "${SEED_SYSTEM_SETTINGS:-false}" = "true" ]; then
     php artisan db:seed --class=Database\\Seeders\\SystemSettingsSeeder --force
 fi
 exec apache2-foreground

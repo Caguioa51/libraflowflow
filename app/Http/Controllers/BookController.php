@@ -159,7 +159,7 @@ class BookController extends Controller
             return redirect()->route('books.index')->with('error', 'Unauthorized.');
         }
         $book->delete();
-        return redirect()->route('books.index')->with('success', 'Book deleted successfully.');
+        return redirect()->route('books.index')->with('book_deleted', 'Book "' . $book->title . '" has been permanently deleted.');
     }
 
     /**

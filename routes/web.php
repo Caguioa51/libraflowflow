@@ -11,7 +11,6 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SystemSettingsController;
 
 Route::get('/', function () {
-    // Always show the public welcome page; the page itself adapts links based on auth state
     return view('welcome');
 })->name('welcome');
 
@@ -84,6 +83,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(
 });
 
 require __DIR__.'/auth.php';
+require __DIR__.'/test.php';
 
 // Testing endpoint (requires authentication and CSRF). Controller still enforces local environment.
 Route::middleware('auth')->post('/testing/borrow', [\App\Http\Controllers\BorrowingController::class, 'testingBorrow'])->name('testing.borrow.auth');

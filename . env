@@ -1,6 +1,6 @@
-APP_NAME=LibraFlow
+APP_NAME=libraFlow
 APP_ENV=local
-APP_KEY=base64:Ihs87y97HTYhteDvMrU5FXibW1Zt6Z0EKADrlrrrF40=
+APP_KEY=base64:YOUR_GENERATED_KEY_HERE
 APP_DEBUG=true
 APP_URL=http://localhost
 
@@ -23,7 +23,7 @@ LOG_LEVEL=debug
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=libraflow_news
+DB_DATABASE=libraflow_new
 DB_USERNAME=root
 DB_PASSWORD=
 
