@@ -98,7 +98,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('authors', AuthorController::class);
     Route::resource('borrowings', BorrowingController::class);
     Route::patch('borrowings/{borrowing}/return', [BorrowingController::class, 'update'])->name('borrowings.return');
+    
+    // FIXED: Both POST and GET routes for mark-as-returned
     Route::post('borrowings/{borrowing}/mark-as-returned', [BorrowingController::class, 'markAsReturned'])->name('borrowings.mark-as-returned');
+    Route::get('borrowings/{borrowing}/mark-as-returned', [BorrowingController::class, 'markAsReturned'])->name('borrowings.mark-as-returned-get');
+    
     Route::get('/my-borrowings', [BorrowingController::class, 'myHistory'])->name('borrowings.my_history');
     Route::get('/admin/report', [BorrowingController::class, 'report'])->name('borrowings.report');
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
