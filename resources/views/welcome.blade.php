@@ -31,8 +31,7 @@
                         <button type="submit" class="btn btn-warning">Logout</button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}" class="btn btn-outline-light me-2">Login</a>
-                    <a href="{{ route('register') }}" class="btn btn-warning">Register</a>
+                    <a href="{{ route('login') }}" class="btn btn-outline-light">Login</a>
                 @endauth
             </div>
         </div>

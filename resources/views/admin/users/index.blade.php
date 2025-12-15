@@ -12,7 +12,11 @@
                     </h1>
                     <p class="text-muted mb-0 mt-1">Manage and monitor all system users</p>
                 </div>
-
+                <div>
+                    <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
+                        <i class="bi bi-person-plus me-2"></i>Create New User
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -383,513 +387,217 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
 
-.user-avatar img {
-    border: 2px solid #e9ecef;
-    transition: all 0.3s ease;
-}
-
-.user-avatar:hover img {
-    border-color: #007bff;
-    transform: scale(1.05);
-}
-
-.empty-state {
-    padding: 3rem 2rem;
-}
-
-.dropdown-item:hover {
-    background-color: #f8f9fa;
-}
-
-.table th {
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.875rem;
-    letter-spacing: 0.025em;
-}
-
-.user-row {
-    transition: all 0.2s ease;
-}
-
-.user-row:hover {
-    background-color: #f8f9fa;
-}
-
-.badge {
-    font-size: 0.75rem;
-}
-
-/* Loading animation */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-.spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
-}
-
-/* Custom scrollbar */
-.table-responsive::-webkit-scrollbar {
-    height: 8px;
-}
-
-.table-responsive::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* Enhanced form controls */
-.form-control:focus, .form-select:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.input-group-text {
-    background-color: #f8f9fa;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .d-flex.gap-2 {
-        flex-direction: column;
-        gap: 0.5rem !important;
-    }
-
-    .avatar-circle {
-        width: 50px;
-        height: 50px;
-    }
-
-    .user-avatar img {
-        width: 35px;
-        height: 35px;
-    }
-}
-
-/* Animation for new rows */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.new-row {
-    animation: fadeInUp 0.3s ease-out;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    initializeUserManagement();
-});
-
-function initializeUserManagement() {
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-    // Filter toggle functionality
-    const filterToggle = document.getElementById('filterToggle');
-    const filterCollapse = document.getElementById('filterCollapse');
-
-    if (filterToggle && filterCollapse) {
-        filterToggle.addEventListener('click', function() {
-            const isExpanded = filterCollapse.classList.contains('show');
-            if (isExpanded) {
-                filterToggle.innerHTML = '<i class="bi bi-chevron-down me-1"></i>Show Filters';
-            } else {
-                filterToggle.innerHTML = '<i class="bi bi-chevron-up me-1"></i>Hide Filters';
-            }
-            updateActiveFilterCount();
-        });
-    }
-
-    // Auto-submit search on typing (debounced)
-    let searchTimeout;
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                if (this.value.length >= 2 || this.value.length === 0) {
-                    document.getElementById('filterForm').submit();
-                }
-            }, 800);
-        });
-    }
-
-    // Update active filter count when filters change
-    const filterForm = document.getElementById('filterForm');
-    if (filterForm) {
-        filterForm.addEventListener('change', updateActiveFilterCount);
-    }
-
-    // Initialize active filter count
-    updateActiveFilterCount();
-
-
-
-
-
-    // Add loading states to buttons
-    document.querySelectorAll('[data-loading]').forEach(button => {
-        button.addEventListener('click', function() {
-            showButtonLoading(this);
-        });
-    });
-}
-
-function updateActiveFilterCount() {
-    const activeFiltersCount = document.getElementById('activeFiltersCount');
-    if (!activeFiltersCount) return;
-
-    let count = 0;
-    const searchInput = document.getElementById('searchInput');
-    const roleFilter = document.getElementById('roleFilter');
-    const statusFilter = document.getElementById('statusFilter');
-    const dateFromFilter = document.getElementById('dateFromFilter');
-
-    if (searchInput && searchInput.value.trim()) count++;
-    if (roleFilter && roleFilter.value) count++;
-    if (statusFilter && statusFilter.value) count++;
-    if (dateFromFilter && dateFromFilter.value) count++;
-
-    activeFiltersCount.textContent = count;
-
-    // Update toggle button text based on filter state
-    const filterToggle = document.getElementById('filterToggle');
-    if (filterToggle && count > 0) {
-        filterToggle.innerHTML = '<i class="bi bi-chevron-up me-1"></i>Hide Filters';
-    }
-}
-
-function editStudentId(userId, currentStudentId, userName) {
-    // Create a more user-friendly modal for editing
-    const modalHtml = `
-        <div class="modal fade" id="studentIdModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="bi bi-pencil me-2"></i>Edit Student ID
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="mb-3">Editing Student ID for: <strong>${userName}</strong></p>
-                        <div class="mb-3">
-                            <label class="form-label">Current Student ID:</label>
-                            <input type="text" class="form-control" value="${currentStudentId || 'Not set'}" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">New Student ID:</label>
-                            <input type="text" class="form-control" id="newStudentId" placeholder="Enter new Student ID (leave empty to remove)">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="confirmStudentIdUpdate(${userId}, '${userName}')">
-                            <i class="bi bi-check me-1"></i>Update
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Remove existing modal if any
-    const existingModal = document.getElementById('studentIdModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-
-    // Add modal to page
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('studentIdModal'));
-    modal.show();
-
-    // Focus on input
-    setTimeout(() => {
-        document.getElementById('newStudentId').focus();
-    }, 500);
-}
-
-function confirmStudentIdUpdate(userId, userName) {
-    const newStudentId = document.getElementById('newStudentId').value.trim();
-
-    if (newStudentId === '') {
-        updateStudentId(userId, null, userName);
-    } else {
-        updateStudentId(userId, newStudentId, userName);
-    }
-
-    // Close modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('studentIdModal'));
-    modal.hide();
-}
-
-function editRfid(userId, currentRfid, userName) {
-    // Create a modal for editing RFID
-    const modalHtml = `
-        <div class="modal fade" id="rfidModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="bi bi-id-card me-2"></i>Edit RFID Card
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="mb-3">Editing RFID card for: <strong>${userName}</strong></p>
-                        <div class="mb-3">
-                            <label class="form-label">Current RFID Card:</label>
-                            <input type="text" class="form-control" value="${currentRfid || 'Not set'}" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">New RFID Card:</label>
-                            <input type="text" class="form-control" id="newRfid" placeholder="Enter new RFID card number (leave empty to remove)">
-                            <div class="form-text">RFID cards are unique identifiers for library access</div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="confirmRfidUpdate(${userId}, '${userName}')">
-                            <i class="bi bi-check me-1"></i>Update
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Remove existing modal if any
-    const existingModal = document.getElementById('rfidModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-
-    // Add modal to page
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('rfidModal'));
-    modal.show();
-
-    // Focus on input
-    setTimeout(() => {
-        document.getElementById('newRfid').focus();
-    }, 500);
-}
-
-function confirmRfidUpdate(userId, userName) {
-    const newRfid = document.getElementById('newRfid').value.trim();
-
-    if (newRfid === '') {
-        updateRfid(userId, null, userName);
-    } else {
-        updateRfid(userId, newRfid, userName);
-    }
-
-    // Close modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('rfidModal'));
-    modal.hide();
-}
-
-function updateRfid(userId, newRfid, userName) {
-    // Show loading state
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Updating...';
-    button.disabled = true;
-
-    // Make AJAX request to update RFID
-    fetch('{{ route("admin.users.update_rfid") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-            user_id: userId,
-            rfid_card: newRfid
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('success', `✅ RFID card updated successfully for ${userName}`);
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        } else {
-            showAlert('danger', `❌ Error: ${data.message}`);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('danger', '❌ Failed to update RFID card. Please try again.');
-    })
-    .finally(() => {
-        // Reset button state
-        button.innerHTML = originalText;
-        button.disabled = false;
-    });
-}
-
-function updateStudentId(userId, newStudentId, userName) {
-    // Show loading state
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Updating...';
-    button.disabled = true;
-
-    // Make AJAX request to update student ID
-    fetch('{{ route("admin.users.update_student_id") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-            user_id: userId,
-            student_id: newStudentId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('success', `✅ Student ID updated successfully for ${userName}`);
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        } else {
-            showAlert('danger', `❌ Error: ${data.message}`);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('danger', '❌ Failed to update Student ID. Please try again.');
-    })
-    .finally(() => {
-        // Reset button state
-        button.innerHTML = originalText;
-        button.disabled = false;
-    });
-}
-
-
-
-
-
-function refreshData() {
-    showAlert('info', '<i class="bi bi-arrow-clockwise me-1"></i>Refreshing data...');
-    window.location.reload();
-}
-
-function refreshTable() {
-    const table = document.getElementById('usersTable');
-    table.classList.add('loading');
-
-    setTimeout(() => {
-        table.classList.remove('loading');
-        showAlert('success', '<i class="bi bi-check-circle me-1"></i>Table refreshed!');
-    }, 1000);
-}
-
-function clearSearch() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('filterForm').submit();
-}
-
-function clearAllFilters() {
-    window.location.href = '{{ route('admin.users.index') }}';
-}
-
-function showButtonLoading(button) {
-    const originalText = button.innerHTML;
-    button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Loading...';
-    button.disabled = true;
-
-    setTimeout(() => {
-        button.innerHTML = originalText;
-        button.disabled = false;
-    }, 2000);
-}
-
-
-
-function showAlert(type, message) {
-    // Remove existing alerts
-    const existingAlerts = document.querySelectorAll('.alert.position-fixed');
-    existingAlerts.forEach(alert => alert.remove());
-
-    // Create alert element
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-
-    // Add to page
-    document.body.appendChild(alertDiv);
-
-    // Auto remove after 5 seconds (unless it's an error)
-    if (type !== 'danger') {
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.remove();
-            }
-        }, 5000);
-    }
-}
-
-// Enhanced keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-    // ESC key to close any open alerts
-    if (e.key === 'Escape') {
-        const alerts = document.querySelectorAll('.alert.position-fixed');
-        alerts.forEach(alert => alert.remove());
-    }
-
-    // Ctrl/Cmd + K to focus search
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        document.getElementById('searchInput').focus();
-    }
-
-    // Ctrl/Cmd + R to refresh
-    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-        e.preventDefault();
-        refreshData();
-    }
-});
-</script>
+ 
+ < ! - -   E d i t   S t u d e n t   I D   M o d a l   - - > 
+ < d i v   c l a s s = " m o d a l   f a d e "   i d = " e d i t S t u d e n t I d M o d a l "   t a b i n d e x = " - 1 " > 
+         < d i v   c l a s s = " m o d a l - d i a l o g " > 
+                 < d i v   c l a s s = " m o d a l - c o n t e n t " > 
+                         < d i v   c l a s s = " m o d a l - h e a d e r " > 
+                                 < h 5   c l a s s = " m o d a l - t i t l e " > 
+                                         < i   c l a s s = " b i   b i - p e n c i l - s q u a r e   m e - 2 " > < / i > E d i t   S t u d e n t   I D 
+                                 < / h 5 > 
+                                 < b u t t o n   t y p e = " b u t t o n "   c l a s s = " b t n - c l o s e "   d a t a - b s - d i s m i s s = " m o d a l " > < / b u t t o n > 
+                         < / d i v > 
+                         < d i v   c l a s s = " m o d a l - b o d y " > 
+                                 < f o r m   i d = " e d i t S t u d e n t I d F o r m " > 
+                                         < i n p u t   t y p e = " h i d d e n "   i d = " s t u d e n t I d U s e r I d "   n a m e = " u s e r _ i d " > 
+                                         < d i v   c l a s s = " m b - 3 " > 
+                                                 < l a b e l   c l a s s = " f o r m - l a b e l   f w - s e m i b o l d " > 
+                                                         < i   c l a s s = " b i   b i - p e r s o n   m e - 1 " > < / i > U s e r   N a m e 
+                                                 < / l a b e l > 
+                                                 < i n p u t   t y p e = " t e x t "   c l a s s = " f o r m - c o n t r o l "   i d = " s t u d e n t I d U s e r N a m e "   r e a d o n l y > 
+                                         < / d i v > 
+                                         < d i v   c l a s s = " m b - 3 " > 
+                                                 < l a b e l   f o r = " s t u d e n t I d I n p u t "   c l a s s = " f o r m - l a b e l   f w - s e m i b o l d " > 
+                                                         S t u d e n t   I D   < s p a n   c l a s s = " t e x t - d a n g e r " > * < / s p a n > 
+                                                 < / l a b e l > 
+                                                 < i n p u t   t y p e = " t e x t "   c l a s s = " f o r m - c o n t r o l "   i d = " s t u d e n t I d I n p u t "   n a m e = " s t u d e n t _ i d "   r e q u i r e d > 
+                                                 < d i v   c l a s s = " f o r m - t e x t " > E n t e r   t h e   n e w   s t u d e n t   I D   f o r   t h i s   u s e r < / d i v > 
+                                         < / d i v > 
+                                 < / f o r m > 
+                         < / d i v > 
+                         < d i v   c l a s s = " m o d a l - f o o t e r " > 
+                                 < b u t t o n   t y p e = " b u t t o n "   c l a s s = " b t n   b t n - s e c o n d a r y "   d a t a - b s - d i s m i s s = " m o d a l " > C a n c e l < / b u t t o n > 
+                                 < b u t t o n   t y p e = " b u t t o n "   c l a s s = " b t n   b t n - w a r n i n g "   o n c l i c k = " u p d a t e S t u d e n t I d ( ) " > 
+                                         < i   c l a s s = " b i   b i - c h e c k - c i r c l e   m e - 1 " > < / i > U p d a t e   S t u d e n t   I D 
+                                 < / b u t t o n > 
+                         < / d i v > 
+                 < / d i v > 
+         < / d i v > 
+ < / d i v > 
+ 
+ < ! - -   E d i t   R F I D   C a r d   M o d a l   - - > 
+ < d i v   c l a s s = " m o d a l   f a d e "   i d = " e d i t R f i d M o d a l "   t a b i n d e x = " - 1 " > 
+         < d i v   c l a s s = " m o d a l - d i a l o g " > 
+                 < d i v   c l a s s = " m o d a l - c o n t e n t " > 
+                         < d i v   c l a s s = " m o d a l - h e a d e r " > 
+                                 < h 5   c l a s s = " m o d a l - t i t l e " > 
+                                         < i   c l a s s = " b i   b i - c r e d i t - c a r d   m e - 2 " > < / i > E d i t   R F I D   C a r d 
+                                 < / h 5 > 
+                                 < b u t t o n   t y p e = " b u t t o n "   c l a s s = " b t n - c l o s e "   d a t a - b s - d i s m i s s = " m o d a l " > < / b u t t o n > 
+                         < / d i v > 
+                         < d i v   c l a s s = " m o d a l - b o d y " > 
+                                 < f o r m   i d = " e d i t R f i d F o r m " > 
+                                         < i n p u t   t y p e = " h i d d e n "   i d = " r f i d U s e r I d "   n a m e = " u s e r _ i d " > 
+                                         < d i v   c l a s s = " m b - 3 " > 
+                                                 < l a b e l   c l a s s = " f o r m - l a b e l   f w - s e m i b o l d " > 
+                                                         < i   c l a s s = " b i   b i - p e r s o n   m e - 1 " > < / i > U s e r   N a m e 
+                                                 < / l a b e l > 
+                                                 < i n p u t   t y p e = " t e x t "   c l a s s = " f o r m - c o n t r o l "   i d = " r f i d U s e r N a m e "   r e a d o n l y > 
+                                         < / d i v > 
+                                         < d i v   c l a s s = " m b - 3 " > 
+                                                 < l a b e l   f o r = " r f i d I n p u t "   c l a s s = " f o r m - l a b e l   f w - s e m i b o l d " > 
+                                                         R F I D   C a r d   N u m b e r 
+                                                 < / l a b e l > 
+                                                 < d i v   c l a s s = " i n p u t - g r o u p " > 
+                                                         < i n p u t   t y p e = " t e x t "   c l a s s = " f o r m - c o n t r o l "   i d = " r f i d I n p u t "   n a m e = " r f i d _ c a r d " > 
+                                                         < b u t t o n   c l a s s = " b t n   b t n - o u t l i n e - s e c o n d a r y "   t y p e = " b u t t o n "   o n c l i c k = " g e n e r a t e R f i d ( ) " > 
+                                                                 < i   c l a s s = " b i   b i - m a g i c " > < / i > 
+                                                         < / b u t t o n > 
+                                                 < / d i v > 
+                                                 < d i v   c l a s s = " f o r m - t e x t " > E n t e r   R F I D   c a r d   n u m b e r   o r   l e a v e   e m p t y   t o   r e m o v e < / d i v > 
+                                         < / d i v > 
+                                 < / f o r m > 
+                         < / d i v > 
+                         < d i v   c l a s s = " m o d a l - f o o t e r " > 
+                                 < b u t t o n   t y p e = " b u t t o n "   c l a s s = " b t n   b t n - s e c o n d a r y "   d a t a - b s - d i s m i s s = " m o d a l " > C a n c e l < / b u t t o n > 
+                                 < b u t t o n   t y p e = " b u t t o n "   c l a s s = " b t n   b t n - i n f o "   o n c l i c k = " u p d a t e R f i d ( ) " > 
+                                         < i   c l a s s = " b i   b i - c h e c k - c i r c l e   m e - 1 " > < / i > U p d a t e   R F I D   C a r d 
+                                 < / b u t t o n > 
+                         < / d i v > 
+                 < / d i v > 
+         < / d i v > 
+ < / d i v > 
+ < / d i v > 
+ 
+ < s c r i p t > 
+ d o c u m e n t . a d d E v e n t L i s t e n e r ( " D O M C o n t e n t L o a d e d " ,   f u n c t i o n ( )   { 
+         / /   C l e a r   s e a r c h   f u n c t i o n a l i t y 
+         w i n d o w . c l e a r S e a r c h   =   f u n c t i o n ( )   { 
+                 d o c u m e n t . g e t E l e m e n t B y I d ( " s e a r c h I n p u t " ) . v a l u e   =   " " ; 
+                 d o c u m e n t . g e t E l e m e n t B y I d ( " f i l t e r F o r m " ) . s u b m i t ( ) ; 
+         } ; 
+ 
+         / /   C l e a r   a l l   f i l t e r s 
+         w i n d o w . c l e a r A l l F i l t e r s   =   f u n c t i o n ( )   { 
+                 w i n d o w . l o c a t i o n . h r e f   =   " { {   r o u t e ( " a d m i n . u s e r s . i n d e x " )   } } " ; 
+         } ; 
+ } ) ; 
+ 
+ / /   E d i t   S t u d e n t   I D   f u n c t i o n 
+ w i n d o w . e d i t S t u d e n t I d   =   f u n c t i o n ( u s e r I d ,   c u r r e n t S t u d e n t I d ,   u s e r N a m e )   { 
+         d o c u m e n t . g e t E l e m e n t B y I d ( " s t u d e n t I d U s e r I d " ) . v a l u e   =   u s e r I d ; 
+         d o c u m e n t . g e t E l e m e n t B y I d ( " s t u d e n t I d U s e r N a m e " ) . v a l u e   =   u s e r N a m e ; 
+         d o c u m e n t . g e t E l e m e n t B y I d ( " s t u d e n t I d I n p u t " ) . v a l u e   =   c u r r e n t S t u d e n t I d   | |   " " ; 
+         
+         c o n s t   m o d a l   =   n e w   b o o t s t r a p . M o d a l ( d o c u m e n t . g e t E l e m e n t B y I d ( " e d i t S t u d e n t I d M o d a l " ) ) ; 
+         m o d a l . s h o w ( ) ; 
+ } ; 
+ 
+ / /   E d i t   R F I D   C a r d   f u n c t i o n 
+ w i n d o w . e d i t R f i d   =   f u n c t i o n ( u s e r I d ,   c u r r e n t R f i d ,   u s e r N a m e )   { 
+         d o c u m e n t . g e t E l e m e n t B y I d ( " r f i d U s e r I d " ) . v a l u e   =   u s e r I d ; 
+         d o c u m e n t . g e t E l e m e n t B y I d ( " r f i d U s e r N a m e " ) . v a l u e   =   u s e r N a m e ; 
+         d o c u m e n t . g e t E l e m e n t B y I d ( " r f i d I n p u t " ) . v a l u e   =   c u r r e n t R f i d   | |   " " ; 
+         
+         c o n s t   m o d a l   =   n e w   b o o t s t r a p . M o d a l ( d o c u m e n t . g e t E l e m e n t B y I d ( " e d i t R f i d M o d a l " ) ) ; 
+         m o d a l . s h o w ( ) ; 
+ } ; 
+ 
+ / /   U p d a t e   S t u d e n t   I D 
+ w i n d o w . u p d a t e S t u d e n t I d   =   f u n c t i o n ( )   { 
+         c o n s t   u s e r I d   =   d o c u m e n t . g e t E l e m e n t B y I d ( " s t u d e n t I d U s e r I d " ) . v a l u e ; 
+         c o n s t   s t u d e n t I d   =   d o c u m e n t . g e t E l e m e n t B y I d ( " s t u d e n t I d I n p u t " ) . v a l u e ; 
+         
+         i f   ( ! s t u d e n t I d . t r i m ( ) )   { 
+                 a l e r t ( " P l e a s e   e n t e r   a   s t u d e n t   I D " ) ; 
+                 r e t u r n ; 
+         } 
+         
+         c o n s t   s u b m i t B t n   =   d o c u m e n t . q u e r y S e l e c t o r ( " # e d i t S t u d e n t I d M o d a l   . b t n - w a r n i n g " ) ; 
+         s u b m i t B t n . i n n e r H T M L   =   " < i   c l a s s = \ " b i   b i - h o u r g l a s s - s p l i t   m e - 1 \ " > < / i > U p d a t i n g . . . " ; 
+         s u b m i t B t n . d i s a b l e d   =   t r u e ; 
+         
+         f e t c h ( " { {   r o u t e ( " a d m i n . u s e r s . u p d a t e _ s t u d e n t _ i d " )   } } " ,   { 
+                 m e t h o d :   " P O S T " , 
+                 h e a d e r s :   { 
+                         " C o n t e n t - T y p e " :   " a p p l i c a t i o n / j s o n " , 
+                         " X - C S R F - T O K E N " :   d o c u m e n t . q u e r y S e l e c t o r ( " m e t a [ n a m e = \ " c s r f - t o k e n \ " ] " ) . c o n t e n t 
+                 } , 
+                 b o d y :   J S O N . s t r i n g i f y ( { 
+                         u s e r _ i d :   u s e r I d , 
+                         s t u d e n t _ i d :   s t u d e n t I d 
+                 } ) 
+         } ) 
+         . t h e n ( r e s p o n s e   = >   r e s p o n s e . j s o n ( ) ) 
+         . t h e n ( d a t a   = >   { 
+                 i f   ( d a t a . s u c c e s s )   { 
+                         a l e r t ( d a t a . m e s s a g e ) ; 
+                         l o c a t i o n . r e l o a d ( ) ; 
+                 }   e l s e   { 
+                         a l e r t ( d a t a . m e s s a g e   | |   " F a i l e d   t o   u p d a t e   s t u d e n t   I D " ) ; 
+                 } 
+         } ) 
+         . c a t c h ( e r r o r   = >   { 
+                 c o n s o l e . e r r o r ( " E r r o r : " ,   e r r o r ) ; 
+                 a l e r t ( " A n   e r r o r   o c c u r r e d   w h i l e   u p d a t i n g   s t u d e n t   I D " ) ; 
+         } ) 
+         . f i n a l l y ( ( )   = >   { 
+                 s u b m i t B t n . i n n e r H T M L   =   " < i   c l a s s = \ " b i   b i - c h e c k - c i r c l e   m e - 1 \ " > < / i > U p d a t e   S t u d e n t   I D " ; 
+                 s u b m i t B t n . d i s a b l e d   =   f a l s e ; 
+                 b o o t s t r a p . M o d a l . g e t I n s t a n c e ( d o c u m e n t . g e t E l e m e n t B y I d ( " e d i t S t u d e n t I d M o d a l " ) ) . h i d e ( ) ; 
+         } ) ; 
+ } ; 
+ 
+ / /   U p d a t e   R F I D   C a r d 
+ w i n d o w . u p d a t e R f i d   =   f u n c t i o n ( )   { 
+         c o n s t   u s e r I d   =   d o c u m e n t . g e t E l e m e n t B y I d ( " r f i d U s e r I d " ) . v a l u e ; 
+         c o n s t   r f i d C a r d   =   d o c u m e n t . g e t E l e m e n t B y I d ( " r f i d I n p u t " ) . v a l u e ; 
+         
+         c o n s t   s u b m i t B t n   =   d o c u m e n t . q u e r y S e l e c t o r ( " # e d i t R f i d M o d a l   . b t n - i n f o " ) ; 
+         s u b m i t B t n . i n n e r H T M L   =   " < i   c l a s s = \ " b i   b i - h o u r g l a s s - s p l i t   m e - 1 \ " > < / i > U p d a t i n g . . . " ; 
+         s u b m i t B t n . d i s a b l e d   =   t r u e ; 
+         
+         f e t c h ( " { {   r o u t e ( " a d m i n . u s e r s . u p d a t e _ r f i d " )   } } " ,   { 
+                 m e t h o d :   " P O S T " , 
+                 h e a d e r s :   { 
+                         " C o n t e n t - T y p e " :   " a p p l i c a t i o n / j s o n " , 
+                         " X - C S R F - T O K E N " :   d o c u m e n t . q u e r y S e l e c t o r ( " m e t a [ n a m e = \ " c s r f - t o k e n \ " ] " ) . c o n t e n t 
+                 } , 
+                 b o d y :   J S O N . s t r i n g i f y ( { 
+                         u s e r _ i d :   u s e r I d , 
+                         r f i d _ c a r d :   r f i d C a r d 
+                 } ) 
+         } ) 
+         . t h e n ( r e s p o n s e   = >   r e s p o n s e . j s o n ( ) ) 
+         . t h e n ( d a t a   = >   { 
+                 i f   ( d a t a . s u c c e s s )   { 
+                         a l e r t ( d a t a . m e s s a g e ) ; 
+                         l o c a t i o n . r e l o a d ( ) ; 
+                 }   e l s e   { 
+                         a l e r t ( d a t a . m e s s a g e   | |   " F a i l e d   t o   u p d a t e   R F I D   c a r d " ) ; 
+                 } 
+         } ) 
+         . c a t c h ( e r r o r   = >   { 
+                 c o n s o l e . e r r o r ( " E r r o r : " ,   e r r o r ) ; 
+                 a l e r t ( " A n   e r r o r   o c c u r r e d   w h i l e   u p d a t i n g   R F I D   c a r d " ) ; 
+         } ) 
+         . f i n a l l y ( ( )   = >   { 
+                 s u b m i t B t n . i n n e r H T M L   =   " < i   c l a s s = \ " b i   b i - c h e c k - c i r c l e   m e - 1 \ " > < / i > U p d a t e   R F I D   C a r d " ; 
+                 s u b m i t B t n . d i s a b l e d   =   f a l s e ; 
+                 b o o t s t r a p . M o d a l . g e t I n s t a n c e ( d o c u m e n t . g e t E l e m e n t B y I d ( " e d i t R f i d M o d a l " ) ) . h i d e ( ) ; 
+         } ) ; 
+ } ; 
+ 
+ / /   G e n e r a t e   R F I D   f u n c t i o n 
+ w i n d o w . g e n e r a t e R f i d   =   f u n c t i o n ( )   { 
+         c o n s t   r f i d I n p u t   =   d o c u m e n t . g e t E l e m e n t B y I d ( " r f i d I n p u t " ) ; 
+         c o n s t   t i m e s t a m p   =   D a t e . n o w ( ) . t o S t r i n g ( ) . s l i c e ( - 8 ) ; 
+         c o n s t   r a n d o m   =   M a t h . f l o o r ( M a t h . r a n d o m ( )   *   1 0 0 0 ) . t o S t r i n g ( ) . p a d S t a r t ( 3 ,   " 0 " ) ; 
+         r f i d I n p u t . v a l u e   =   " R F I D "   +   t i m e s t a m p   +   r a n d o m ; 
+ } ; 
+ < / s c r i p t > 
+ @ e n d s e c t i o n 
+  
+ 

@@ -35,8 +35,10 @@
             <button type="submit" class="btn btn-primary w-100 py-2">{{ __('Log in') }}</button>
         </form>
         <div class="mt-4 text-center">
-            <span class="text-muted">Don't have an account?</span>
-            <a href="{{ route('register') }}" class="text-primary fw-semibold">Register</a>
+            <small class="text-muted">
+                <i class="bi bi-info-circle"></i>
+                New user registration is handled by administrators only.
+            </small>
         </div>
     </div>
 </div>

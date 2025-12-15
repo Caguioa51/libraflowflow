@@ -235,16 +235,28 @@ class UserManagementController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'student_id' => ['required', 'string', 'max:255', 'unique:users,student_id'],
             'role' => ['required', 'in:student,teacher,admin'],
+            'rfid_card' => ['nullable', 'string', 'max:255', 'unique:users,barcode'],
             'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
         ]);
 
         try {
+            // Determine the barcode (RFID) for the user
+            $barcode = $request->rfid_card 
+                ? $request->rfid_card 
+                : 'STUDENT-' . $request->student_id;
+                
+            // Check if the barcode is already taken
+            $existingUser = User::where('barcode', $barcode)->first();
+            if ($existingUser) {
+                return back()->withErrors(['rfid_card' => 'This RFID card number is already assigned to another user.'])->withInput();
+            }
+
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'student_id' => $request->student_id,
                 'role' => $request->role,
-                'barcode' => 'STUDENT-' . $request->student_id,
+                'barcode' => $barcode,
                 'password' => \Illuminate\Support\Facades\Hash::make($request->password),
             ]);
 
@@ -255,7 +267,8 @@ class UserManagementController extends Controller
                 'new_user_id' => $user->id,
                 'new_user_name' => $user->name,
                 'new_user_email' => $user->email,
-                'new_user_role' => $user->role
+                'new_user_role' => $user->role,
+                'barcode' => $barcode
             ]);
 
             return redirect()->route('admin.users.index')->with('success', 'User created successfully.');

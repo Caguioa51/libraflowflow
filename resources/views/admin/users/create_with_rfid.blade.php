@@ -186,12 +186,20 @@
                                 <label for="password" class="form-label fw-semibold">
                                     Password <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" 
-                                       class="form-control @error('password') is-invalid @enderror" 
-                                       id="password" 
-                                       name="password" 
-                                       required
-                                       placeholder="Enter password">
+                                <div class="input-group">
+                                    <input type="password" 
+                                           class="form-control @error('password') is-invalid @enderror" 
+                                           id="password" 
+                                           name="password" 
+                                           required
+                                           placeholder="Enter password">
+                                    <button class="btn btn-outline-secondary" 
+                                            type="button" 
+                                            onclick="togglePassword('password')"
+                                            id="passwordToggle">
+                                        <i class="bi bi-eye" id="passwordIcon"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text">Minimum 8 characters</div>
                                 @error('password')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -202,12 +210,20 @@
                                 <label for="password_confirmation" class="form-label fw-semibold">
                                     Confirm Password <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" 
-                                       class="form-control" 
-                                       id="password_confirmation" 
-                                       name="password_confirmation" 
-                                       required
-                                       placeholder="Confirm password">
+                                <div class="input-group">
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="password_confirmation" 
+                                           name="password_confirmation" 
+                                           required
+                                           placeholder="Confirm password">
+                                    <button class="btn btn-outline-secondary" 
+                                            type="button" 
+                                            onclick="togglePassword('password_confirmation')"
+                                            id="confirmPasswordToggle">
+                                        <i class="bi bi-eye" id="confirmPasswordIcon"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text">Must match the password above</div>
                             </div>
 
@@ -242,6 +258,9 @@
                                         </a>
                                     </div>
                                     <div>
+                                        <button type="button" class="btn btn-outline-primary me-2" onclick="previewUser()">
+                                            <i class="bi bi-eye me-1"></i>Preview
+                                        </button>
                                         <button type="submit" class="btn btn-primary" id="submitBtn">
                                             <i class="bi bi-check-circle me-1"></i>Create User
                                         </button>
@@ -251,6 +270,62 @@
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-eye me-2"></i>User Preview
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
+                             style="width: 80px; height: 80px;">
+                            <span class="text-white fw-bold fs-4" id="previewAvatar">U</span>
+                        </div>
+                        <h6 class="fw-bold" id="previewName">User Name</h6>
+                        <span class="badge bg-primary" id="previewRole">Role</span>
+                    </div>
+                    <div class="col-md-8">
+                        <table class="table table-sm">
+                            <tr>
+                                <td class="fw-semibold">Email:</td>
+                                <td id="previewEmail">email@example.com</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Student ID:</td>
+                                <td id="previewStudentId">STUDENT123</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">RFID Card:</td>
+                                <td id="previewRfidCard">Not provided</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Barcode:</td>
+                                <td id="previewBarcode">STUDENT-STUDENT123</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Created:</td>
+                                <td>{{ now()->format('M d, Y h:i A') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitForm()">
+                    <i class="bi bi-check me-1"></i>Create This User
+                </button>
             </div>
         </div>
     </div>
@@ -287,9 +362,33 @@
     transform: translateY(-1px);
 }
 
+.input-group .btn {
+    border-radius: 0 0.375rem 0.375rem 0;
+}
+
 .badge {
     font-size: 0.75rem;
     font-weight: 500;
+}
+
+.table td {
+    border-color: #f1f3f4;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 0.5rem 0.5rem;
 }
 
 /* Responsive adjustments */
@@ -299,11 +398,44 @@
         gap: 1rem;
         align-items: stretch !important;
     }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate barcode preview
+    const studentIdInput = document.getElementById('student_id');
+    const rfidInput = document.getElementById('rfid_card');
+    const barcodePreview = document.getElementById('previewBarcode');
+    const rfidPreview = document.getElementById('previewRfidCard');
+    
+    function updatePreview() {
+        const studentId = studentIdInput.value;
+        const rfidCard = rfidInput.value;
+        
+        if (rfidCard) {
+            barcodePreview.textContent = rfidCard;
+            rfidPreview.textContent = rfidCard;
+        } else if (studentId) {
+            barcodePreview.textContent = 'STUDENT-' + studentId;
+            rfidPreview.textContent = 'Not provided (auto-generated)';
+        } else {
+            barcodePreview.textContent = 'STUDENT-{Student ID}';
+            rfidPreview.textContent = 'Not provided';
+        }
+    }
+    
+    studentIdInput.addEventListener('input', updatePreview);
+    rfidInput.addEventListener('input', updatePreview);
+    
+    // Initial preview update
+    updatePreview();
+
     // Form validation
     const form = document.getElementById('createUserForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -329,9 +461,6 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordConfirmation.addEventListener('input', validatePassword);
 });
 
-function generateRfid() {
-    const rfidInput = document.getElementById('rfid_card');
-    const timestamp = Date.now().toString().slice(-8);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    rfidInput.value = 'RFID' + timestamp + random;
-}
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon =
