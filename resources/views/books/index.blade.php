@@ -58,6 +58,19 @@
         </div>
     @endif
 
+    <!-- Enhanced Book Deletion Notification -->
+    @if(session('book_deleted'))
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning alert-dismissible fade show border-0 shadow-sm" role="alert">
+                    <i class="bi bi-trash-fill me-2"></i>
+                    <strong>Book Deleted!</strong> {{ session('book_deleted') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Enhanced Search and Filter Section -->
     <div class="row mb-4">
         <div class="col-12">
@@ -223,7 +236,7 @@
                                         <a href="{{ route('books.edit', $book) }}" class="btn btn-outline-warning btn-sm flex-fill">
                                             <i class="bi bi-pencil me-1"></i>Edit
                                         </a>
-                                        <form action="{{ route('books.destroy', $book) }}" method="POST" class="flex-fill" onsubmit="return confirm('Are you sure you want to delete this book?')">
+                                        <form action="{{ route('books.destroy', $book) }}" method="POST" class="flex-fill" onsubmit="return confirmBookDeletion(this, '{{ addslashes($book->title) }}')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-outline-danger btn-sm w-100">
@@ -357,6 +370,188 @@ function showLoadingState(form) {
         button.disabled = true;
         button.classList.add('borrowing');
     }
+}
+
+// Enhanced confirmation for book deletion
+function confirmBookDeletion(form, bookTitle) {
+    // Create a custom confirmation modal
+    const modal = document.createElement('div');
+    modal.className = 'custom-confirm-modal';
+    modal.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Book Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-exclamation-triangle display-4 text-danger mb-3"></i>
+                        <h4 class="text-danger">Delete Book?</h4>
+                        <p class="lead">"${bookTitle}"</p>
+                        <p class="text-muted mt-3">
+                            <strong>Warning:</strong> This action cannot be undone. All borrowing records and reservations for this book will also be deleted.
+                        </p>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Important:</strong> Please ensure this book is no longer needed before deleting.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary cancel-btn">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger confirm-btn">
+                        <i class="bi bi-trash me-2"></i>Delete Permanently
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add modal styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .custom-confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .custom-confirm-modal .modal-overlay {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .custom-confirm-modal .modal-content {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            animation: slideUp 0.3s ease;
+            overflow: hidden;
+        }
+
+        .custom-confirm-modal .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #eee;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .custom-confirm-modal .modal-title {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .custom-confirm-modal .btn-close-white {
+            filter: invert(1);
+            opacity: 0.8;
+        }
+
+        .custom-confirm-modal .modal-body {
+            padding: 24px;
+            text-align: center;
+        }
+
+        .custom-confirm-modal .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+
+        .custom-confirm-modal .cancel-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .custom-confirm-modal .confirm-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .custom-confirm-modal .confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+
+    // Get modal elements
+    const closeBtn = modal.querySelector('.btn-close-white');
+    const cancelBtn = modal.querySelector('.cancel-btn');
+    const confirmBtn = modal.querySelector('.confirm-btn');
+
+    // Handle close button
+    closeBtn.onclick = () => {
+        modal.remove();
+    };
+
+    // Handle cancel button
+    cancelBtn.onclick = () => {
+        modal.remove();
+    };
+
+    // Handle confirm button
+    confirmBtn.onclick = () => {
+        // Show loading state on the delete button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
+            submitBtn.disabled = true;
+        }
+
+        // Submit the form
+        form.submit();
+    };
+
+    // Close modal when clicking outside
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
+
+    // Prevent form submission (we'll handle it in the confirm button)
+    return false;
 }
 
 // Initialize page functionality

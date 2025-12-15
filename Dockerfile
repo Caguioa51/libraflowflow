@@ -60,8 +60,8 @@ COPY <<EOF /etc/apache2/sites-available/000-default.conf
     <FilesMatch \.php$>
         SetHandler application/x-httpd-php
     </FilesMatch>
-    ErrorLog \/error.log
-    CustomLog \/access.log combined
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
 EOF
 
@@ -69,18 +69,30 @@ EOF
 COPY <<EOF /startup.sh
 #!/bin/bash
 set -e
+echo "Starting Libraflow deployment..."
 php artisan config:cache
 php artisan migrate --force
 php artisan storage:link
-if [ "\" = "true" ]; then
+
+# Seed admin user if requested
+if [ "\${SEED_ADMIN_USER:-false}" = "true" ]; then
+    echo "Seeding admin user..."
     php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder --force
 fi
-if [ "\" = "true" ]; then
+
+# Seed real books if requested
+if [ "\${SEED_REAL_BOOKS:-false}" = "true" ]; then
+    echo "Seeding real books..."
     php artisan db:seed --class=Database\\Seeders\\RealBooksSeeder --force
 fi
-if [ "\" = "true" ]; then
+
+# Seed system settings if requested
+if [ "\${SEED_SYSTEM_SETTINGS:-false}" = "true" ]; then
+    echo "Seeding system settings..."
     php artisan db:seed --class=Database\\Seeders\\SystemSettingsSeeder --force
 fi
+
+echo "Starting Apache..."
 exec apache2-foreground
 EOF
 

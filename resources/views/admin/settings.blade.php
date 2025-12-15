@@ -105,6 +105,7 @@
                             </div>
                         </div>
 
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="weekend_due_dates" class="form-label">Weekend Due Dates</label>
@@ -225,6 +226,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveBtn = document.getElementById('saveBtn');
 
     form.addEventListener('submit', function(e) {
+        // Prevent default form submission to handle it manually
+        e.preventDefault();
+
         // Add loading state to button
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         saveBtn.disabled = true;
@@ -243,15 +247,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (!isValid) {
-            e.preventDefault();
             saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Settings';
             saveBtn.disabled = false;
             alert('Please fill in all required fields.');
             return false;
         }
 
-        // Form will submit normally
-        return true;
+        // Manually submit the form to prevent duplicate submissions
+        form.submit();
     });
 
     // Reset button functionality

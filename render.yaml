@@ -47,11 +47,17 @@ services:
           type: redis
           name: libraflow-redis
           property: password
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: LOG_LEVEL
+        value: error
 
 databases:
   - name: libraflow-db
-    databaseName: libraflow
-    user: libraflow
+    databaseName: libraflow_aa5l
+    user: libraflow_aa5l_user
 
   - type: redis
     name: libraflow-redis

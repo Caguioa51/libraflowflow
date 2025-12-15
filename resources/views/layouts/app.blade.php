@@ -199,49 +199,35 @@
             }
         </script>
 
-        <!-- Custom Dropdown JavaScript -->
+        <!-- Ensure Bootstrap dropdown works properly -->
         <script>
-            function toggleDropdown(event) {
-                event.preventDefault();
-                event.stopPropagation();
+            // Initialize Bootstrap dropdowns
+            document.addEventListener('DOMContentLoaded', function() {
+                // Make sure all dropdowns work with Bootstrap
+                var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+                dropdownElementList.map(function (dropdownToggleEl) {
+                    return new bootstrap.Dropdown(dropdownToggleEl);
+                });
 
-                const dropdownMenu = document.getElementById('userDropdownMenu');
-                const dropdownArrow = document.querySelector('.dropdown-arrow');
-
-                if (dropdownMenu && dropdownArrow) {
-                    if (dropdownMenu.style.display === 'none' || dropdownMenu.style.display === '') {
-                        dropdownMenu.style.display = 'block';
-                        dropdownMenu.style.position = 'absolute';
-                        dropdownMenu.style.top = '100%';
-                        dropdownMenu.style.right = '0';
-                        dropdownMenu.style.zIndex = '9999';
-                        dropdownArrow.classList.add('rotated');
-                    } else {
-                        dropdownMenu.style.display = 'none';
-                        dropdownArrow.classList.remove('rotated');
+                // Set up CSRF token for all forms
+                var csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (csrfToken) {
+                    // Set CSRF token for axios if available
+                    if (window.axios) {
+                        window.axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.content;
                     }
-                }
-            }
 
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(event) {
-                const dropdownMenu = document.getElementById('userDropdownMenu');
-                const dropdownToggle = document.getElementById('userDropdown');
-                const dropdownArrow = document.querySelector('.dropdown-arrow');
-
-                if (dropdownMenu && dropdownToggle && dropdownArrow) {
-                    if (!dropdownToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
-                        dropdownMenu.style.display = 'none';
-                        dropdownArrow.classList.remove('rotated');
-                    }
-                }
-            });
-
-            // Ensure dropdown items are clickable
-            document.addEventListener('click', function(event) {
-                if (event.target.classList.contains('dropdown-item')) {
-                    // Allow the click to proceed normally
-                    return true;
+                    // Ensure all forms have CSRF token
+                    var forms = document.querySelectorAll('form');
+                    forms.forEach(function(form) {
+                        if (!form.querySelector('input[name="_token"]')) {
+                            var csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_token';
+                            csrfInput.value = csrfToken.content;
+                            form.appendChild(csrfInput);
+                        }
+                    });
                 }
             });
         </script>

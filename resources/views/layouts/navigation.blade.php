@@ -45,7 +45,7 @@
             <!-- User Account Dropdown -->
             <div class="dropdown ms-3">
                 <button class="btn btn-outline-light border-0 dropdown-toggle d-flex align-items-center"
-                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
                     <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center"
                          style="width: 24px; height: 24px;">
                         <i class="bi bi-person text-white" style="font-size: 12px;"></i>
@@ -71,9 +71,9 @@
                     @endif
 
                     <div class="border-top my-1"></div>
-                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                    <form method="POST" action="{{ route('logout') }}" class="d-inline" id="logoutForm">
                         @csrf
-                        <button type="submit" class="dropdown-item text-danger">
+                        <button type="button" class="dropdown-item text-danger" onclick="document.getElementById('logoutForm').submit();">
                             <i class="bi bi-box-arrow-right me-2"></i>Logout
                         </button>
                     </form>

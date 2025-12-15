@@ -54,9 +54,10 @@ class Borrowing extends Model
 
         $daysOverdue = $now->diffInDays($this->due_date);
         $finePerDay = \App\Models\SystemSetting::get('fine_per_day', 5.00);
-        
+
         return $daysOverdue * $finePerDay;
     }
+
 
     /**
      * Check if the book is overdue
@@ -105,4 +106,5 @@ class Borrowing extends Model
         $this->fine_amount = $this->calculateFine();
         $this->save();
     }
+
 }

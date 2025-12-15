@@ -37,6 +37,13 @@
             </div>
         </div>
                 </nav>
+    @if(session('status'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;">
+            {{ session('status') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <section class="hero text-center">
         <div class="container">
             <img src="https://yt3.googleusercontent.com/ytc/AIdro_lkEzByQWiP7aN8FsnOE0YDcDAAYka5o4WkmHWJgbmldw=s900-c-k-c0x00ffffff-no-rj" alt="School Logo" width="80" class="mb-3">
@@ -91,9 +98,6 @@
         </div>
 
     </section>
-    <footer class="footer mt-5 py-3 bg-dark text-white text-center">
-        &copy; {{ date('Y') }} Dagupan City National Highschool Library &mdash; Powered by LibraFlow
-    </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     </body>
 </html>
