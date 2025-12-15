@@ -88,13 +88,7 @@ class SystemSettingsController extends Controller
                 }
             }
 
-            // Handle boolean fields specially
-            if ($request->has('self_service_enabled')) {
-                $settingsToUpdate['self_service_enabled'] = $request->input('self_service_enabled', 'false');
-            }
-            if ($request->has('email_notifications_enabled')) {
-                $settingsToUpdate['email_notifications_enabled'] = $request->input('email_notifications_enabled', 'false');
-            }
+            // Handle boolean fields specially (removed - no longer used in form)
 
             // Library information settings
             $libraryInfoFields = ['library_hours', 'library_location', 'featured_books_text'];
@@ -164,8 +158,6 @@ class SystemSettingsController extends Controller
                 'max_overdue_days' => ['value' => 30, 'type' => 'number'],
                 'weekend_due_dates' => ['value' => 'move_to_monday', 'type' => 'string'],
                 'holiday_handling' => ['value' => 'extend', 'type' => 'string'],
-                'self_service_enabled' => ['value' => 'true', 'type' => 'boolean'],
-                'email_notifications_enabled' => ['value' => 'true', 'type' => 'boolean'],
                 'due_date_reminder_days' => ['value' => 3, 'type' => 'number'],
                 'overdue_notification_days' => ['value' => 1, 'type' => 'number'],
 

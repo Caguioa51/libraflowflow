@@ -179,37 +179,7 @@ Sunday: Closed' }}</textarea>
 
                         <hr class="my-4">
 
-                        <!-- System Features -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-warning mb-3"><i class="fas fa-toggle-on"></i> System Features</h6>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="form-check">
-                                    <input type="hidden" name="self_service_enabled" value="false">
-                                    <input class="form-check-input" type="checkbox" id="self_service_enabled"
-                                           name="self_service_enabled" value="true"
-                                           {{ ($settings['self_service_enabled']->value ?? 'true') === 'true' ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="self_service_enabled">
-                                        Enable Self-Service Checkout
-                                    </label>
-                                    <div class="form-text">Allow students to borrow books without librarian assistance</div>
-                                </div>
-                            </div>
 
-                            <div class="col-md-6 mb-3">
-                                <div class="form-check">
-                                    <input type="hidden" name="email_notifications_enabled" value="false">
-                                    <input class="form-check-input" type="checkbox" id="email_notifications_enabled"
-                                           name="email_notifications_enabled" value="true"
-                                           {{ ($settings['email_notifications_enabled']->value ?? 'true') === 'true' ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="email_notifications_enabled">
-                                        Enable Email Notifications
-                                    </label>
-                                    <div class="form-text">Send email notifications for overdue books and reminders</div>
-                                </div>
-                            </div>
-                        </div>
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary" id="saveBtn">
@@ -218,6 +188,12 @@ Sunday: Closed' }}</textarea>
                             <button type="button" class="btn btn-outline-secondary" id="resetBtn">
                                 <i class="fas fa-undo"></i> Reset to Defaults
                             </button>
+                            <form method="POST" action="{{ route('admin.trigger_notifications') }}" class="d-inline" onsubmit="return confirm('Send due date notifications to all users? This will create notifications for books due soon and overdue books.')">
+                                @csrf
+                                <button type="submit" class="btn btn-info">
+                                    <i class="fas fa-bell"></i> Send Notifications
+                                </button>
+                            </form>
                         </div>
                     </form>
                 </div>

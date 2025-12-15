@@ -121,6 +121,19 @@ Route::middleware('auth')->group(function () {
         return response()->json(['count' => $count]);
     })->name('notifications.count');
 
+    // Manual notification trigger for testing (admin only)
+    Route::post('/admin/trigger-notifications', function () {
+        if (!auth()->user()->isAdmin()) {
+            abort(403);
+        }
+
+        \Artisan::call('notifications:send-due-date-reminders', ['--test' => true]);
+
+        $output = \Artisan::output();
+
+        return redirect()->back()->with('success', 'Notifications processed (test mode). Check command output for details.');
+    })->name('admin.trigger_notifications')->middleware('auth');
+
     // Borrowing management routes
     Route::post('/borrowings/{borrowing}/update-due-date', [BorrowingController::class, 'updateDueDate'])->name('borrowings.update_due_date');
     Route::post('/borrowings/{borrowing}/change-book', [BorrowingController::class, 'changeBook'])->name('borrowings.change_book');
