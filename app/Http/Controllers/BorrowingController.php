@@ -92,16 +92,15 @@ class BorrowingController extends Controller
         }
 
         if ($isSelfService) {
-            $message = 'Book borrowed successfully! You can manage your borrowings in "My Borrowing History".';
             $redirectRoute = 'borrowings.my_history'; // Redirect to user's borrowing history
+            return redirect()->route($redirectRoute, $validated['user_id']);
         } else {
             // Admin borrowing for another user
             $userName = $validated['user_id'] == auth()->id() ? 'yourself' : User::find($validated['user_id'])->name;
             $message = "Book borrowed successfully for {$userName}! You can view their borrowing history or borrow more books.";
             $redirectRoute = 'admin.users.view_history';
+            return redirect()->route($redirectRoute, $validated['user_id'])->with('success', $message);
         }
-
-        return redirect()->route($redirectRoute, $validated['user_id'])->with('success', $message);
     }
 
     /**
@@ -159,6 +158,52 @@ class BorrowingController extends Controller
     }
 
     /**
+     * Renew a borrowing (extend due date)
+     */
+    public function renew(Borrowing $borrowing)
+    {
+        // Check if user owns this borrowing or is admin
+        if ($borrowing->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
+            return redirect()->route('dashboard')->with('error', 'Unauthorized.');
+        }
+
+        if ($borrowing->status !== 'borrowed') {
+            return redirect()->back()->with('error', 'This book cannot be renewed because it is not currently borrowed.');
+        }
+
+        // Check if borrowing can be renewed
+        if (!$borrowing->canRenew()) {
+            $maxRenewals = SystemSetting::get('max_renewals', 2);
+            return redirect()->back()->with('error', "This book has reached the maximum number of renewals ({$maxRenewals}).");
+        }
+
+        // Check if book is overdue
+        if ($borrowing->due_date < now()) {
+            return redirect()->back()->with('error', 'Overdue books cannot be renewed. Please return the book first.');
+        }
+
+        $borrowingDuration = SystemSetting::get('borrowing_duration_days', 14);
+
+        try {
+            $borrowing->update([
+                'due_date' => $borrowing->due_date->addDays($borrowingDuration),
+                'renewals_count' => ($borrowing->renewals_count ?? 0) + 1,
+            ]);
+
+            $message = "Book renewed successfully! New due date: " . $borrowing->due_date->format('M d, Y');
+
+            if (auth()->user()->isAdmin()) {
+                return redirect()->back()->with('success', $message);
+            } else {
+                return redirect()->route('borrowings.my_history')->with('success', $message);
+            }
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to renew book. Please try again.');
+        }
+    }
+
+    /**
      * Mark borrowing as returned (dedicated method for "Mark as Returned" functionality)
      */
     public function markAsReturned(Borrowing $borrowing)
@@ -205,8 +250,16 @@ class BorrowingController extends Controller
         if (!auth()->user()->isAdmin()) {
             return redirect()->route('dashboard')->with('error', 'Unauthorized.');
         }
+
         $borrowing->delete();
-        return redirect()->route('borrowings.index')->with('success', 'Borrowing record deleted.');
+
+        // Check if request came from reports page and redirect back there
+        $referer = request()->headers->get('referer');
+        if ($referer && str_contains($referer, route('borrowings.report', [], false))) {
+            return redirect()->route('borrowings.report')->with('success', 'Borrowing record deleted successfully.');
+        }
+
+        return redirect()->route('borrowings.index')->with('success', 'Borrowing record deleted successfully.');
     }
 
     public function myHistory()
@@ -222,7 +275,7 @@ class BorrowingController extends Controller
         return view('borrowings.my_history', compact('borrowings'));
     }
 
-    public function report()
+    public function report(Request $request)
     {
         if (!auth()->user()->isAdmin()) {
             return redirect()->route('dashboard')->with('error', 'Unauthorized.');
@@ -252,8 +305,36 @@ class BorrowingController extends Controller
             'overdue_books' => $overdueBooks,
         ];
 
-        // Get recent borrowings for the table
-        $borrowings = Borrowing::with(['book', 'user'])->orderByDesc('created_at')->paginate(20);
+        // Build query for borrowing records with search and filters
+        $borrowingsQuery = Borrowing::with(['book', 'user']);
+
+        // Apply search filter (book title or borrower name)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $borrowingsQuery->where(function($query) use ($search) {
+                $query->whereHas('book', function($q) use ($search) {
+                    $q->where('title', 'like', '%' . $search . '%');
+                })->orWhereHas('user', function($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%');
+                });
+            });
+        }
+
+        // Apply status filter
+        if ($request->filled('status')) {
+            $borrowingsQuery->where('status', $request->status);
+        }
+
+        // Apply date range filter
+        if ($request->filled('from_date')) {
+            $borrowingsQuery->whereDate('borrowed_at', '>=', $request->from_date);
+        }
+        if ($request->filled('to_date')) {
+            $borrowingsQuery->whereDate('borrowed_at', '<=', $request->to_date);
+        }
+
+        // Get filtered borrowings with pagination
+        $borrowings = $borrowingsQuery->orderByDesc('created_at')->paginate(20)->withQueryString();
 
         return view('borrowings.report', compact(
             'totalBooks',
@@ -449,6 +530,86 @@ class BorrowingController extends Controller
         } catch (\Exception $e) {
             \DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Failed'], 500);
+        }
+    }
+
+    // Update due date for borrowing
+    public function updateDueDate(Request $request, Borrowing $borrowing)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('dashboard')->with('error', 'Unauthorized.');
+        }
+
+        $request->validate([
+            'due_date' => 'required|date|after:today'
+        ]);
+
+        try {
+            $borrowing->update([
+                'due_date' => $request->due_date
+            ]);
+
+            return redirect()->back()->with('success', 'Due date updated successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to update due date. Please try again.');
+        }
+    }
+
+    // Change book in borrowing
+    public function changeBook(Request $request, Borrowing $borrowing)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('dashboard')->with('error', 'Unauthorized.');
+        }
+
+        $request->validate([
+            'new_book_id' => 'required|exists:books,id'
+        ]);
+
+        $newBookId = $request->new_book_id;
+        $oldBookId = $borrowing->book_id;
+
+        // Don't allow changing to the same book
+        if ($newBookId == $oldBookId) {
+            return redirect()->back()->with('error', 'Cannot change to the same book.');
+        }
+
+        // Check if new book is available
+        $newBook = Book::find($newBookId);
+        if ($newBook->status !== 'available' || ($newBook->available_quantity ?? $newBook->quantity ?? 1) <= 0) {
+            return redirect()->back()->with('error', 'The selected book is not available.');
+        }
+
+        $borrowingDuration = SystemSetting::get('borrowing_duration_days', 14);
+
+        \DB::beginTransaction();
+        try {
+            // Update old book inventory (return it)
+            $oldBook = $borrowing->book;
+            $oldAvailable = is_null($oldBook->available_quantity) ? ($oldBook->quantity ?? 1) : $oldBook->available_quantity;
+            $oldBook->available_quantity = min($oldBook->quantity ?? 1, $oldAvailable + 1);
+            $oldBook->status = $oldBook->available_quantity > 0 ? 'available' : 'borrowed';
+            $oldBook->save();
+
+            // Update new book inventory (borrow it)
+            $newAvailable = is_null($newBook->available_quantity) ? ($newBook->quantity ?? 1) : $newBook->available_quantity;
+            $newBook->available_quantity = max(0, $newAvailable - 1);
+            $newBook->status = $newBook->available_quantity <= 0 ? 'borrowed' : 'available';
+            $newBook->save();
+
+            // Update borrowing record
+            $borrowing->update([
+                'book_id' => $newBookId,
+                'due_date' => now()->addDays($borrowingDuration),
+                'renewals_count' => 0, // Reset renewals when changing book
+            ]);
+
+            \DB::commit();
+
+            return redirect()->back()->with('success', 'Book changed successfully! Due date has been reset.');
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to change book. Please try again.');
         }
     }
 

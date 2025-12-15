@@ -9,19 +9,7 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>✅ Success!</strong> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
 
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>❌ Error!</strong> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
 
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -35,17 +23,60 @@
         </div>
     @endif
 
-    <div class="row">
-        <div class="col-lg-8">
+    <!-- System Configuration -->
+    <div class="row mb-4">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Library Configuration</h5>
+                    <h5 class="mb-0"><i class="fas fa-cogs"></i> System Configuration</h5>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('admin.settings.update') }}">
                         @csrf
 
-                        <div class="row">
+                        <!-- Library Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3"><i class="fas fa-building"></i> Library Information</h6>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="library_hours" class="form-label fw-semibold">
+                                    <i class="fas fa-clock text-primary"></i> Library Hours
+                                </label>
+                                <textarea class="form-control" id="library_hours" name="library_hours"
+                                          rows="3" placeholder="Enter library operating hours...">{{ $settings['library_hours']->value ?? 'Monday - Friday: 7:00 AM - 5:00 PM
+Saturday: 8:00 AM - 12:00 PM
+Sunday: Closed' }}</textarea>
+                                <div class="form-text">Operating hours displayed on the welcome page</div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="library_location" class="form-label fw-semibold">
+                                    <i class="fas fa-map-marker-alt text-danger"></i> Library Location
+                                </label>
+                                <input type="text" class="form-control" id="library_location" name="library_location"
+                                       value="{{ $settings['library_location']->value ?? 'Dagupan City National High School, Dagupan City, Pangasinan' }}"
+                                       placeholder="Enter library address...">
+                                <div class="form-text">Physical address shown on welcome page</div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="featured_books_text" class="form-label fw-semibold">
+                                    <i class="fas fa-star text-warning"></i> Featured Books Text
+                                </label>
+                                <textarea class="form-control" id="featured_books_text" name="featured_books_text"
+                                          rows="3" placeholder="Enter featured books description...">{{ $settings['featured_books_text']->value ?? 'Discover our most popular and recently added books. From classic literature to modern bestsellers, find your next great read in our carefully curated collection.' }}</textarea>
+                                <div class="form-text">Description text for featured books section</div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Borrowing Configuration Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-success mb-3"><i class="fas fa-book"></i> Borrowing Configuration</h6>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <label for="borrowing_duration_days" class="form-label">Default Borrowing Period (Days)</label>
                                 <input type="number" class="form-control" id="borrowing_duration_days"
@@ -63,9 +94,7 @@
                                        min="0" max="10" required>
                                 <div class="form-text">How many times a book can be renewed before it must be returned</div>
                             </div>
-                        </div>
 
-                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="fine_per_day" class="form-label">Overdue Fine Rate (₱ per day)</label>
                                 <input type="number" class="form-control" id="fine_per_day"
@@ -83,9 +112,7 @@
                                        min="1" max="20" required>
                                 <div class="form-text">Maximum number of books a student can borrow simultaneously</div>
                             </div>
-                        </div>
 
-                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="grace_period_days" class="form-label">Grace Period (Days)</label>
                                 <input type="number" class="form-control" id="grace_period_days"
@@ -105,8 +132,13 @@
                             </div>
                         </div>
 
+                        <hr class="my-4">
 
-                        <div class="row">
+                        <!-- Date and Notification Settings -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-info mb-3"><i class="fas fa-calendar"></i> Date & Notification Settings</h6>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <label for="weekend_due_dates" class="form-label">Weekend Due Dates</label>
                                 <select class="form-control" id="weekend_due_dates" name="weekend_due_dates" required>
@@ -125,9 +157,33 @@
                                 </select>
                                 <div class="form-text">How to handle due dates that fall on school holidays</div>
                             </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="due_date_reminder_days" class="form-label">Due Date Reminder (Days Before)</label>
+                                <input type="number" class="form-control" id="due_date_reminder_days"
+                                       name="due_date_reminder_days"
+                                       value="{{ $settings['due_date_reminder_days']->value ?? 3 }}"
+                                       min="1" max="14" required>
+                                <div class="form-text">Days before due date to send reminder notifications</div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="overdue_notification_days" class="form-label">Overdue Notification Delay (Days)</label>
+                                <input type="number" class="form-control" id="overdue_notification_days"
+                                       name="overdue_notification_days"
+                                       value="{{ $settings['overdue_notification_days']->value ?? 1 }}"
+                                       min="0" max="7" required>
+                                <div class="form-text">Days after due date to send first overdue notification</div>
+                            </div>
                         </div>
 
-                        <div class="row">
+                        <hr class="my-4">
+
+                        <!-- System Features -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-warning mb-3"><i class="fas fa-toggle-on"></i> System Features</h6>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <div class="form-check">
                                     <input type="hidden" name="self_service_enabled" value="false">
@@ -150,68 +206,20 @@
                                     <label class="form-check-label" for="email_notifications_enabled">
                                         Enable Email Notifications
                                     </label>
-                                    <div class="form-text">Send email notifications for overdue books</div>
+                                    <div class="form-text">Send email notifications for overdue books and reminders</div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary" id="saveBtn">
-                                <i class="fas fa-save"></i> Save Settings
+                                <i class="fas fa-save"></i> Save All Settings
                             </button>
-                            <a href="{{ route('admin.settings') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-undo"></i> Reset
-                            </a>
+                            <button type="button" class="btn btn-outline-secondary" id="resetBtn">
+                                <i class="fas fa-undo"></i> Reset to Defaults
+                            </button>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">System Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <strong>Current Settings:</strong>
-                        <ul class="list-unstyled mt-2">
-                            <li><i class="fas fa-calendar text-primary"></i> Borrowing Duration: {{ $settings['borrowing_duration_days']->value ?? 14 }} days</li>
-                            <li><i class="fas fa-redo text-info"></i> Max Renewals: {{ $settings['max_renewals']->value ?? 2 }}</li>
-                            <li><i class="fas fa-dollar-sign text-warning"></i> Fine Rate: ₱{{ number_format($settings['fine_per_day']->value ?? 5.00, 2) }}/day</li>
-                            <li><i class="fas fa-book text-success"></i> Max Books/User: {{ $settings['max_books_per_user']->value ?? 3 }}</li>
-                            <li><i class="fas fa-clock text-secondary"></i> Grace Period: {{ $settings['grace_period_days']->value ?? 3 }} days</li>
-                            <li><i class="fas fa-exclamation-triangle text-danger"></i> Max Overdue: {{ $settings['max_overdue_days']->value ?? 30 }} days</li>
-                            <li><i class="fas fa-calendar-alt text-info"></i> Weekend Due Dates: {{ ucwords(str_replace('_', ' ', $settings['weekend_due_dates']->value ?? 'move_to_monday')) }}</li>
-                            <li><i class="fas fa-plane text-warning"></i> Holiday Handling: {{ ucfirst($settings['holiday_handling']->value ?? 'extend') }}</li>
-                            <li><i class="fas fa-shopping-cart text-secondary"></i> Self-Service: {{ ($settings['self_service_enabled']->value ?? 'true') === 'true' ? 'Enabled' : 'Disabled' }}</li>
-                            <li><i class="fas fa-envelope text-danger"></i> Email Notifications: {{ ($settings['email_notifications_enabled']->value ?? 'true') === 'true' ? 'Enabled' : 'Disabled' }}</li>
-                        </ul>
-                    </div>
-
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Note:</strong> Changes to these settings will affect all users immediately.
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0">Quick Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('borrowings.update_fines') }}" class="btn btn-outline-warning"
-                           onclick="return confirm('Update fines for all overdue books?')">
-                            <i class="fas fa-calculator"></i> Update All Fines
-                        </a>
-                        {{-- Analytics removed --}}
-                        <a href="{{ route('borrowings.report') }}" class="btn btn-outline-info">
-                            <i class="fas fa-file-alt"></i> Generate Report
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
@@ -258,18 +266,34 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Reset button functionality
-    const resetBtn = document.querySelector('a[href*="admin/settings"]');
+    const resetBtn = document.getElementById('resetBtn');
     if (resetBtn) {
         resetBtn.addEventListener('click', function(e) {
-            if (form.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"])').some(input => input.value !== input.defaultValue) ||
-                form.querySelectorAll('select').some(select => select.value !== select.querySelector('option[selected]')?.value) ||
-                form.querySelectorAll('input[type="checkbox"]').some(checkbox => checkbox.checked !== checkbox.defaultChecked)) {
+            e.preventDefault();
 
-                if (!confirm('You have unsaved changes. Are you sure you want to reset?')) {
-                    e.preventDefault();
-                    return false;
-                }
+            if (!confirm('⚠️ WARNING: This will reset ALL system settings to their default values. This action cannot be undone.\n\nAre you sure you want to reset all settings?')) {
+                return false;
             }
+
+            // Show loading state
+            resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+            resetBtn.disabled = true;
+            saveBtn.disabled = true;
+
+            // Create and submit reset form
+            const resetForm = document.createElement('form');
+            resetForm.method = 'POST';
+            resetForm.action = '{{ route("admin.settings.reset") }}';
+            resetForm.style.display = 'none';
+
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            resetForm.appendChild(csrfToken);
+
+            document.body.appendChild(resetForm);
+            resetForm.submit();
         });
     }
 

@@ -3,14 +3,43 @@
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-chart-line"></i> Library Analytics Dashboard</h1>
         <div>
-            <a href="{{ route('borrowings.report') }}" class="btn btn-outline-primary">
-                <i class="fas fa-file-alt"></i> Basic Reports
+            <h1 class="h2 mb-2">
+                <i class="fas fa-chart-line text-primary me-3"></i>
+                Library Analytics Dashboard
+            </h1>
+            <p class="text-muted mb-0">Monitor library performance and generate reports</p>
+        </div>
+        <div class="d-flex gap-3">
+            <!-- Enhanced Basic Reports Button - Most Prominent -->
+            <a href="{{ route('borrowings.report') }}" class="btn btn-success btn-lg px-5 py-3 shadow-lg position-relative"
+               style="transform: scale(1.05); border: 3px solid rgba(255,255,255,0.3); background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #28a745 100%);"
+               data-bs-toggle="tooltip" data-bs-placement="bottom" title="🚀 Generate comprehensive library reports - Most popular feature!">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white bg-opacity-30 rounded-circle d-flex align-items-center justify-content-center me-3 pulse-icon" style="width: 40px; height: 40px;">
+                        <i class="fas fa-chart-bar text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="fw-bold text-white fs-5">📊 BASIC REPORTS</span>
+                        <div class="small text-white-75 fw-semibold">Generate Library Reports</div>
+                    </div>
+                    <i class="fas fa-external-link-alt ms-4 text-white fs-6"></i>
+                </div>
+                <!-- Enhanced Popularity indicator -->
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark fw-bold px-3 py-2 shadow-sm" style="font-size: 0.75rem;">
+                    <i class="fas fa-fire me-1"></i>HOT
+                    <span class="visually-hidden">Most popular feature</span>
+                </span>
+                <!-- Glow effect -->
+                <div class="position-absolute top-50 start-50 translate-middle" style="width: 120%; height: 120%; background: radial-gradient(circle, rgba(40,167,69,0.3) 0%, transparent 70%); border-radius: 50%; z-index: -1;"></div>
             </a>
-            <a href="{{ route('borrowings.update_fines') }}" class="btn btn-outline-warning" 
-               onclick="return confirm('Update fines for all overdue books?')">
-                <i class="fas fa-calculator"></i> Update Fines
+
+            <!-- Enhanced Update Fines Button -->
+            <a href="{{ route('borrowings.update_fines') }}" class="btn btn-warning btn-lg px-4 shadow-sm"
+               onclick="return confirm('Update fines for all overdue books? This will recalculate fines based on current due dates.')"
+               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Recalculate and update all overdue fines">
+                <i class="fas fa-calculator me-2"></i>
+                <span class="fw-semibold">💰 Update Fines</span>
             </a>
         </div>
     </div>
@@ -34,7 +63,7 @@
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
+            <div class="card border-left-success shadow h-100 py-2" style="cursor: pointer;" onclick="window.location.href='{{ route('books.index', ['status' => 'available']) }}'">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -50,7 +79,7 @@
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
+            <div class="card border-left-info shadow h-100 py-2" style="cursor: pointer;" onclick="window.location.href='{{ route('borrowings.report', ['status' => 'borrowed']) }}'">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -280,6 +309,16 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Initialize tooltips when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+<script>
 // Monthly borrowing trends chart
 const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
 const monthlyData = @json($monthlyBorrowings);
@@ -362,6 +401,53 @@ new Chart(dailyCtx, {
 }
 .border-left-secondary {
     border-left: 0.25rem solid #858796 !important;
+}
+
+/* Enhanced Basic Reports Button Styles */
+.btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #17a2b8 50%, #218838 100%) !important;
+    transform: scale(1.08) !important;
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
+}
+
+.pulse-icon {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(40, 167, 69, 0.6);
+        transform: scale(1.05);
+    }
+}
+
+/* Make the reports button stand out even more */
+.btn-success {
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.btn-success::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #28a745, #20c997, #28a745);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.btn-success:hover::before {
+    opacity: 0.8;
 }
 </style>
 @endsection

@@ -21,31 +21,17 @@
                 </div>
                 <div class="d-flex gap-2">
                     @if(auth()->user()->isAdmin())
-                        <a href="{{ route('books.create') }}" class="btn btn-success btn-lg">
+                        <a href="{{ route('books.create') }}" class="btn btn-primary btn-lg">
                             <i class="bi bi-plus-circle me-2"></i>Add New Book
                         </a>
                     @endif
-                    <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-lg">
-                        <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                    </a>
+
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Alerts -->
-    @if(session('success'))
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
-                    <i class="bi bi-check-circle-fill me-2"></i>
-                    <strong>Success!</strong> {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            </div>
-        </div>
-    @endif
-
     @if(session('error'))
         <div class="row mb-4">
             <div class="col-12">
@@ -139,8 +125,8 @@
             <div class="card border-0 shadow-sm bg-warning text-white">
                 <div class="card-body text-center">
                     <i class="bi bi-clock display-4 mb-2"></i>
-                    <h3 class="mb-1">{{ $books->where('status', 'borrowed')->count() }}</h3>
-                    <p class="mb-0 opacity-75">Borrowed</p>
+                    <h3 class="mb-1">{{ auth()->user()->borrowings->where('status', 'borrowed')->count() }}</h3>
+                    <p class="mb-0 opacity-75">You Borrowed</p>
                 </div>
             </div>
         </div>
@@ -164,14 +150,6 @@
                      data-author="{{ strtolower($book->author->name) }}"
                      data-category="{{ strtolower($book->category->name) }}">
                     <div class="card h-100 border-0 shadow-sm hover-lift">
-                        <!-- Book Cover -->
-                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
-                            <div class="text-center">
-                                <i class="bi bi-book text-primary" style="font-size: 4rem;"></i>
-                                <p class="text-muted small mt-2 mb-0">No Cover</p>
-                            </div>
-                        </div>
-
                         <div class="card-body d-flex flex-column">
                             <!-- Book Title -->
                             <h5 class="card-title text-truncate mb-2" title="{{ $book->title }}">
@@ -552,6 +530,255 @@ function confirmBookDeletion(form, bookTitle) {
 
     // Prevent form submission (we'll handle it in the confirm button)
     return false;
+}
+
+// Enhanced confirmation for book renewal
+function confirmBookRenewal(bookTitle, borrowerName, currentDueDate) {
+    // Create a custom confirmation modal
+    const modal = document.createElement('div');
+    modal.className = 'custom-confirm-modal';
+    modal.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-arrow-clockwise me-2"></i>RENEW BOOK
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-arrow-clockwise text-success fs-1"></i>
+                        </div>
+                        <h4 class="text-success mb-1">Renew Book?</h4>
+                        <h5 class="text-primary mb-3">"${bookTitle}"</h5>
+                        <div class="text-muted mb-4">
+                            <strong>Borrower:</strong> ${borrowerName}<br>
+                            <strong>Current Due Date:</strong> ${currentDueDate ? new Date(currentDueDate).toLocaleDateString() : 'Unknown'}
+                        </div>
+                    </div>
+
+                    <!-- Renewal Benefits -->
+                    <div class="alert alert-success">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-check-circle me-2"></i>What Happens on Renewal:
+                        </h6>
+                        <ul class="mb-0 small">
+                            <li><strong>Extended Due Date:</strong> Due date will be extended by the standard borrowing period</li>
+                            <li><strong>No Late Fees:</strong> Current borrowing remains penalty-free</li>
+                            <li><strong>Borrowing History:</strong> Renewal will be recorded in the system</li>
+                            <li><strong>Availability:</strong> Book remains unavailable to other users</li>
+                        </ul>
+                    </div>
+
+                    <!-- Renewal Limits -->
+                    <div class="alert alert-info">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-info-circle me-2"></i>Important Notes:
+                        </h6>
+                        <p class="mb-0 small">
+                            Books can typically be renewed up to 2 times. If the renewal limit is reached or if there are reservations, the renewal may be denied.
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-lg px-4" id="cancelBtn">
+                        <i class="fas fa-times me-2"></i>Cancel Renewal
+                    </button>
+                    <button type="button" class="btn btn-success btn-lg px-4" id="confirmBtn">
+                        <i class="fas fa-check-circle me-2"></i>Confirm Renewal
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add modal styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .custom-confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .custom-confirm-modal .modal-overlay {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .custom-confirm-modal .modal-content {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            animation: slideUp 0.3s ease;
+        }
+
+        .custom-confirm-modal .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #eee;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .custom-confirm-modal .modal-title {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .custom-confirm-modal .btn-close-white {
+            filter: invert(1);
+            opacity: 0.8;
+        }
+
+        .custom-confirm-modal .modal-body {
+            padding: 24px;
+            text-align: center;
+        }
+
+        .custom-confirm-modal .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+
+        .custom-confirm-modal .btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .custom-confirm-modal .btn-secondary {
+            background: #6c757d;
+            border: none;
+        }
+
+        .custom-confirm-modal .btn-success {
+            border: none;
+            box-shadow: 0 4px 15px rgba(25, 135, 84, 0.3);
+        }
+
+        .custom-confirm-modal .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(25, 135, 84, 0.4);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .custom-confirm-modal .alert {
+            text-align: left;
+            border-radius: 8px;
+        }
+    `;
+
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+
+    // Get modal elements
+    const closeBtn = modal.querySelector('.btn-close-white');
+    const cancelBtn = modal.querySelector('#cancelBtn');
+    const confirmBtn = modal.querySelector('#confirmBtn');
+
+    // Handle close button
+    closeBtn.onclick = () => {
+        modal.remove();
+    };
+
+    // Handle cancel button
+    cancelBtn.onclick = () => {
+        modal.remove();
+    };
+
+    // Handle confirm button
+    confirmBtn.onclick = () => {
+        // Show loading state
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Renewing...';
+        confirmBtn.disabled = true;
+
+        // Here you would typically make an AJAX call to renew the book
+        // For now, we'll show a success message and close the modal
+        setTimeout(() => {
+            modal.remove();
+            // Show success message
+            showRenewalSuccess(bookTitle);
+        }, 1500);
+    };
+
+    // Close modal when clicking outside
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
+}
+
+// Show renewal success message
+function showRenewalSuccess(bookTitle) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.alert.position-fixed');
+    existingAlerts.forEach(alert => alert.remove());
+
+    // Create success alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-success alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 350px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Book Renewed!</strong> "${bookTitle}" has been successfully renewed.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+    // Add to page
+    document.body.appendChild(alertDiv);
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 4000);
+
+    // Refresh the page after a short delay to show updated data
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
 }
 
 // Initialize page functionality

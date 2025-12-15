@@ -61,6 +61,14 @@
         </div>
     </section>
     @endif
+    @php
+        $libraryHours = \App\Models\SystemSetting::get('library_hours', 'Monday - Friday: 7:00 AM - 5:00 PM
+Saturday: 8:00 AM - 12:00 PM
+Sunday: Closed');
+        $libraryLocation = \App\Models\SystemSetting::get('library_location', 'Dagupan City National High School, Dagupan City, Pangasinan');
+        $featuredBooksText = \App\Models\SystemSetting::get('featured_books_text', 'Discover our most popular and recently added books. From classic literature to modern bestsellers, find your next great read in our carefully curated collection.');
+    @endphp
+
     <section class="container my-5">
         <div class="row mb-4">
             <div class="col-md-4">
@@ -68,7 +76,7 @@
                     <div class="card-body">
                         <i class="bi bi-clock-history fs-1 text-primary"></i>
                         <h5 class="card-title mt-2">Library Hours</h5>
-                        <p class="card-text">Mon-Fri: 7:30am - 4:00pm<br>Sat: 8:00am - 12:00pm<br>Sun: Closed</p>
+                        <p class="card-text">{!! nl2br(e($libraryHours)) !!}</p>
                     </div>
                 </div>
             </div>
@@ -77,20 +85,16 @@
                     <div class="card-body">
                         <i class="bi bi-geo-alt fs-1 text-success"></i>
                         <h5 class="card-title mt-2">Location</h5>
-                        <p class="card-text">Dagupan City National Highschool<br>123 School Lane<br>Dagupan City</p>
+                        <p class="card-text">{{ $libraryLocation }}</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card feature-card text-center shadow-sm">
                     <div class="card-body">
-                        <i class="bi bi-book-half fs-1 text-warning"></i>
+                        <i class="bi bi-star-half fs-1 text-warning"></i>
                         <h5 class="card-title mt-2">Featured Books</h5>
-                        <ul class="list-unstyled mb-0">
-                            @foreach(\App\Models\Book::latest()->take(3)->get() as $book)
-                                <li><i class="bi bi-dot"></i> {{ $book->title }}</li>
-                            @endforeach
-                        </ul>
+                        <p class="card-text">{{ $featuredBooksText }}</p>
                     </div>
                 </div>
             </div>

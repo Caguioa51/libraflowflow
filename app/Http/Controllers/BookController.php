@@ -32,6 +32,15 @@ class BookController extends Controller
             $query->where('category_id', $categoryId);
         }
 
+        if ($status = request('status')) {
+            if ($status === 'available') {
+                $query->where('status', 'available')
+                      ->where('available_quantity', '>', 0);
+            } elseif ($status === 'borrowed') {
+                $query->where('status', 'borrowed');
+            }
+        }
+
         $books = $query->paginate(12); // Increased per page for better grid layout
         $categories = Category::has('books')->withCount('books')->get();
 

@@ -44,7 +44,6 @@
                                 <div class="card-body">
                                     <div class="row align-items-center">
                                         <div class="col-md-3 text-center">
-                                            <img id="rfid_user_photo" src="" alt="Profile" class="rounded-circle mb-3" width="80" height="80">
                                             <h6 id="rfid_user_name" class="mb-0"></h6>
                                             <small id="rfid_user_role" class="text-muted"></small>
                                         </div>
@@ -122,7 +121,6 @@
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col-md-3 text-center">
-                                        <img src="{{ $selectedUser->profile_photo_url }}" alt="Profile" class="rounded-circle mb-2" width="80" height="80">
                                         <h6 class="mb-0">{{ $selectedUser->name }}</h6>
                                         <small class="text-muted">{{ ucfirst($selectedUser->role) }}</small>
                                     </div>
@@ -338,7 +336,6 @@ document.addEventListener('DOMContentLoaded', function() {
             this.noUser.classList.add('d-none');
 
             // Populate user data
-            document.getElementById('rfid_user_photo').src = user.profile_photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name);
             document.getElementById('rfid_user_name').textContent = user.name;
             document.getElementById('rfid_user_email').textContent = user.email;
             document.getElementById('rfid_user_student_id').textContent = user.student_id || 'N/A';

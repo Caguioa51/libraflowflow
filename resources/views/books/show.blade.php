@@ -2,17 +2,6 @@
 
 @section('content')
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <nav aria-label="breadcrumb" class="mb-4">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('books.index') }}">Books</a></li>
-                    <li class="breadcrumb-item active">{{ $book->title }}</li>
-                </ol>
-            </nav>
-        </div>
-    </div>
 
     <div class="row">
         <div class="col-lg-8">

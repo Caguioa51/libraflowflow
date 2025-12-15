@@ -107,6 +107,24 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/report', [BorrowingController::class, 'report'])->name('borrowings.report');
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 
+    // Notification routes
+    Route::post('/notifications/{notification}/read', function (\App\Models\Notification $notification) {
+        if ($notification->user_id !== auth()->id()) {
+            abort(403);
+        }
+        $notification->markAsRead();
+        return response()->json(['success' => true]);
+    })->name('notifications.read');
+
+    Route::get('/notifications/count', function () {
+        $count = \App\Models\Notification::where('user_id', auth()->id())->unread()->count();
+        return response()->json(['count' => $count]);
+    })->name('notifications.count');
+
+    // Borrowing management routes
+    Route::post('/borrowings/{borrowing}/update-due-date', [BorrowingController::class, 'updateDueDate'])->name('borrowings.update_due_date');
+    Route::post('/borrowings/{borrowing}/change-book', [BorrowingController::class, 'changeBook'])->name('borrowings.change_book');
+
     // Book reservation system
     Route::post('/books/{book}/reserve', [BookController::class, 'reserve'])->name('books.reserve');
     Route::delete('/books/{book}/reserve', [BookController::class, 'cancelReservation'])->name('books.cancel_reservation');
@@ -136,10 +154,17 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(
     // Admin settings (SystemSettingsController expects an admin settings page)
     Route::get('/admin/settings', [\App\Http\Controllers\SystemSettingsController::class, 'index'])->name('admin.settings');
     Route::post('/admin/settings', [\App\Http\Controllers\SystemSettingsController::class, 'update'])->name('admin.settings.update');
+    Route::post('/admin/settings/reset', [\App\Http\Controllers\SystemSettingsController::class, 'reset'])->name('admin.settings.reset');
+
+    // Admin borrowing management
+    Route::post('/admin/borrowings/{borrowing}/update-due-date', [\App\Http\Controllers\BorrowingController::class, 'updateDueDate'])->name('admin.borrowings.update_due_date');
     // User management for admins
     Route::get('/admin/users', [\App\Http\Controllers\Admin\UserManagementController::class, 'index'])->name('admin.users.index');
     Route::get('/admin/users/create', [\App\Http\Controllers\Admin\UserManagementController::class, 'create'])->name('admin.users.create');
     Route::post('/admin/users', [\App\Http\Controllers\Admin\UserManagementController::class, 'store'])->name('admin.users.store');
+    Route::get('/admin/users/{user}/edit', [\App\Http\Controllers\Admin\UserManagementController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/admin/users/{user}', [\App\Http\Controllers\Admin\UserManagementController::class, 'update'])->name('admin.users.update');
+    Route::delete('/admin/users/{user}', [\App\Http\Controllers\Admin\UserManagementController::class, 'destroy'])->name('admin.users.destroy');
     Route::get('/admin/users/{user}/borrow', [\App\Http\Controllers\Admin\UserManagementController::class, 'borrowForUser'])->name('admin.users.borrow_for_user');
     Route::get('/admin/users/{user}/history', [\App\Http\Controllers\Admin\UserManagementController::class, 'viewHistory'])->name('admin.users.view_history');
     Route::post('/admin/users/update-student-id', [\App\Http\Controllers\Admin\UserManagementController::class, 'updateStudentId'])->name('admin.users.update_student_id');

@@ -1,37 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid mt-3">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-2">
-                            <li class="breadcrumb-item">
-                                <a href="{{ route('admin.users.index') }}" class="text-decoration-none">
-                                    <i class="bi bi-people-fill me-1"></i>User Management
-                                </a>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">
-                                <i class="bi bi-person-plus me-1"></i>Create New User
-                            </li>
-                        </ol>
-                    </nav>
-                    <h1 class="h3 mb-0 text-dark fw-bold">
-                        <i class="bi bi-person-plus me-2 text-primary"></i>Create New User
-                    </h1>
-                    <p class="text-muted mb-0 mt-1">Register a new user in the library system</p>
-                </div>
-                <div>
-                    <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-1"></i>Back to Users
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="container-fluid mt-4">
+
 
     <!-- Success/Error Messages -->
     @if(session('success'))
@@ -66,7 +37,7 @@
                 <div class="card-body">
                     <form method="POST" action="{{ route('admin.users.store') }}" id="createUserForm">
                         @csrf
-                        
+
                         <div class="row g-4">
                             <!-- Personal Information -->
                             <div class="col-12">
@@ -79,12 +50,12 @@
                                 <label for="name" class="form-label fw-semibold">
                                     Full Name <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" 
-                                       class="form-control @error('name') is-invalid @enderror" 
-                                       id="name" 
-                                       name="name" 
-                                       value="{{ old('name') }}" 
-                                       required 
+                                <input type="text"
+                                       class="form-control @error('name') is-invalid @enderror"
+                                       id="name"
+                                       name="name"
+                                       value="{{ old('name') }}"
+                                       required
                                        autofocus
                                        placeholder="Enter full name">
                                 @error('name')
@@ -96,11 +67,11 @@
                                 <label for="email" class="form-label fw-semibold">
                                     Email Address <span class="text-danger">*</span>
                                 </label>
-                                <input type="email" 
-                                       class="form-control @error('email') is-invalid @enderror" 
-                                       id="email" 
-                                       name="email" 
-                                       value="{{ old('email') }}" 
+                                <input type="email"
+                                       class="form-control @error('email') is-invalid @enderror"
+                                       id="email"
+                                       name="email"
+                                       value="{{ old('email') }}"
                                        required
                                        placeholder="Enter email address">
                                 @error('email')
@@ -112,11 +83,11 @@
                                 <label for="student_id" class="form-label fw-semibold">
                                     Student ID <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" 
-                                       class="form-control @error('student_id') is-invalid @enderror" 
-                                       id="student_id" 
-                                       name="student_id" 
-                                       value="{{ old('student_id') }}" 
+                                <input type="text"
+                                       class="form-control @error('student_id') is-invalid @enderror"
+                                       id="student_id"
+                                       name="student_id"
+                                       value="{{ old('student_id') }}"
                                        required
                                        placeholder="Enter student ID">
                                 <div class="form-text">Unique identifier for the user</div>
@@ -129,9 +100,9 @@
                                 <label for="role" class="form-label fw-semibold">
                                     User Role <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('role') is-invalid @enderror" 
-                                        id="role" 
-                                        name="role" 
+                                <select class="form-select @error('role') is-invalid @enderror"
+                                        id="role"
+                                        name="role"
                                         required>
                                     <option value="">Select a role</option>
                                     <option value="student" {{ old('role') === 'student' ? 'selected' : '' }}>
@@ -156,20 +127,20 @@
                                     RFID Card Number
                                 </label>
                                 <div class="input-group">
-                                    <input type="text" 
-                                           class="form-control @error('rfid_card') is-invalid @enderror" 
-                                           id="rfid_card" 
-                                           name="rfid_card" 
-                                           value="{{ old('rfid_card') }}" 
+                                    <input type="text"
+                                           class="form-control @error('rfid_card') is-invalid @enderror"
+                                           id="rfid_card"
+                                           name="rfid_card"
+                                           value="{{ old('rfid_card') }}"
                                            placeholder="Enter RFID card number (optional)">
-                                    <button class="btn btn-outline-secondary" 
-                                            type="button" 
+                                    <button class="btn btn-outline-secondary"
+                                            type="button"
                                             onclick="generateRfid()"
                                             title="Generate RFID">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                 </div>
-                                <div class="form-text">RFID card for library access (optional, will auto-generate if empty)</div>
+                                <div class="form-text">RFID card for library access (optional)</div>
                                 @error('rfid_card')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -186,12 +157,20 @@
                                 <label for="password" class="form-label fw-semibold">
                                     Password <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" 
-                                       class="form-control @error('password') is-invalid @enderror" 
-                                       id="password" 
-                                       name="password" 
-                                       required
-                                       placeholder="Enter password">
+                                <div class="input-group">
+                                    <input type="password"
+                                           class="form-control @error('password') is-invalid @enderror"
+                                           id="password"
+                                           name="password"
+                                           required
+                                           placeholder="Enter password">
+                                    <button class="btn btn-outline-secondary"
+                                            type="button"
+                                            id="togglePassword"
+                                            title="Show/Hide Password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text">Minimum 8 characters</div>
                                 @error('password')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -202,16 +181,24 @@
                                 <label for="password_confirmation" class="form-label fw-semibold">
                                     Confirm Password <span class="text-danger">*</span>
                                 </label>
-                                <input type="password" 
-                                       class="form-control" 
-                                       id="password_confirmation" 
-                                       name="password_confirmation" 
-                                       required
-                                       placeholder="Confirm password">
+                                <div class="input-group">
+                                    <input type="password"
+                                           class="form-control"
+                                           id="password_confirmation"
+                                           name="password_confirmation"
+                                           required
+                                           placeholder="Confirm password">
+                                    <button class="btn btn-outline-secondary"
+                                            type="button"
+                                            id="toggleConfirmPassword"
+                                            title="Show/Hide Password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text">Must match the password above</div>
                             </div>
 
-                            <!-- Auto-generated Information -->
+                            <!-- User Information -->
                             <div class="col-12 mt-4">
                                 <h6 class="text-primary fw-bold mb-3">
                                     <i class="bi bi-info-circle me-2"></i>System Information
@@ -221,31 +208,24 @@
                             <div class="col-12">
                                 <div class="alert alert-info" role="alert">
                                     <i class="bi bi-info-circle me-2"></i>
-                                    <strong>Auto-generated Information:</strong>
+                                    <strong>What happens next:</strong>
                                     <ul class="mb-0 mt-2">
-                                        <li><strong>Barcode:</strong> Will be automatically generated as "STUDENT-{Student ID}" or use the RFID card number provided</li>
-                                        <li><strong>Email Verification:</strong> User will need to verify their email before first login</li>
-                                        <li><strong>Account Status:</strong> Account will be active immediately after creation</li>
+                                        <li><strong>Barcode Generation:</strong> Automatically created as "STUDENT-{Student ID}" or uses provided RFID</li>
+                                        <li><strong>Email Verification:</strong> User must verify email before first login</li>
+                                        <li><strong>Account Activation:</strong> Account becomes active immediately</li>
+                                        <li><strong>Default Permissions:</strong> Based on selected role</li>
                                     </ul>
                                 </div>
                             </div>
-                        </div>
 
                         <!-- Form Actions -->
                         <div class="row mt-4">
                             <div class="col-12">
                                 <hr class="mb-4">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">
-                                            <i class="bi bi-arrow-left me-1"></i>Cancel
-                                        </a>
-                                    </div>
-                                    <div>
-                                        <button type="submit" class="btn btn-primary" id="submitBtn">
-                                            <i class="bi bi-check-circle me-1"></i>Create User
-                                        </button>
-                                    </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <i class="bi bi-check-circle me-1"></i>Create User
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -307,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form validation
     const form = document.getElementById('createUserForm');
     const submitBtn = document.getElementById('submitBtn');
-    
+
     form.addEventListener('submit', function(e) {
         submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Creating...';
         submitBtn.disabled = true;
@@ -316,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Password confirmation validation
     const password = document.getElementById('password');
     const passwordConfirmation = document.getElementById('password_confirmation');
-    
+
     function validatePassword() {
         if (passwordConfirmation.value && password.value !== passwordConfirmation.value) {
             passwordConfirmation.setCustomValidity('Passwords do not match');
@@ -324,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
             passwordConfirmation.setCustomValidity('');
         }
     }
-    
+
     password.addEventListener('input', validatePassword);
     passwordConfirmation.addEventListener('input', validatePassword);
 });
@@ -335,3 +315,27 @@ function generateRfid() {
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     rfidInput.value = 'RFID' + timestamp + random;
 }
+
+// Password toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const toggleConfirmPasswordBtn = document.getElementById('toggleConfirmPassword');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('password_confirmation');
+
+    togglePasswordBtn.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        this.querySelector('i').classList.toggle('fa-eye');
+        this.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+
+    toggleConfirmPasswordBtn.addEventListener('click', function() {
+        const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        confirmPasswordInput.setAttribute('type', type);
+        this.querySelector('i').classList.toggle('fa-eye');
+        this.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+});
+
+</script>

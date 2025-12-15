@@ -25,6 +25,15 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+        <!-- Bootstrap Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -45,22 +54,23 @@
             .table-bordered th, .table-bordered td { border: 1px solid #dee2e6; }
             .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(0,0,0,.05); }
         </style>
-
-        <!-- Bootstrap CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-
-        <!-- Bootstrap Icons -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
         <style>
             body {
                 background: #ced4da !important;
             }
             .navbar-brand { font-weight: bold; letter-spacing: 1px; }
             .footer { background: #222; color: #fff; padding: 1rem 0; text-align: center; margin-top: 3rem; }
-            .card {
+            /* Only apply card styles to cards without background colors */
+            .card:not(.bg-primary):not(.bg-info):not(.bg-warning):not(.bg-danger):not(.bg-success):not(.bg-secondary) {
                 box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
                 border: 1px solid #e9ecef !important;
                 background-color: #ffffff !important;
+                border-radius: 8px !important;
+            }
+
+            /* Apply shadow and border to all cards */
+            .card {
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
                 border-radius: 8px !important;
             }
             .nav-link.active, .nav-link:focus { font-weight: bold; color: #0d6efd !important; }
@@ -150,19 +160,7 @@
     <body>
         @include('layouts.navigation')
 
-        @if(!request()->routeIs('dashboard') && !request()->routeIs('welcome'))
-        <div class="container-fluid py-2 bg-light border-bottom">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-6">
-                        <a href="{{ url()->previous() }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-arrow-left me-2"></i>Back to Previous Page
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endif
+
 
         <div class="container py-4">
             @if(session('success'))
@@ -217,17 +215,74 @@
                         window.axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.content;
                     }
 
-                    // Ensure all forms have CSRF token
-                    var forms = document.querySelectorAll('form');
-                    forms.forEach(function(form) {
-                        if (!form.querySelector('input[name="_token"]')) {
-                            var csrfInput = document.createElement('input');
-                            csrfInput.type = 'hidden';
-                            csrfInput.name = '_token';
-                            csrfInput.value = csrfToken.content;
-                            form.appendChild(csrfInput);
+                // Ensure all forms have CSRF token
+                var forms = document.querySelectorAll('form');
+                forms.forEach(function(form) {
+                    if (!form.querySelector('input[name="_token"]')) {
+                        var csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_token';
+                        csrfInput.value = csrfToken.content;
+                        form.appendChild(csrfInput);
+                    }
+                });
+            });
+
+            // Notification functions
+            function markAsRead(notificationId) {
+                fetch(`/notifications/${notificationId}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update UI to reflect read status
+                        const notificationElement = document.querySelector(`[onclick="markAsRead(${notificationId})"]`);
+                        if (notificationElement) {
+                            notificationElement.classList.remove('bg-primary', 'bg-opacity-10');
+                            notificationElement.classList.add('bg-light');
+                            const newBadge = notificationElement.querySelector('.badge');
+                            if (newBadge) {
+                                newBadge.remove();
+                            }
                         }
+                        // Update notification count
+                        updateNotificationCount();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking notification as read:', error);
+                });
+            }
+
+            function updateNotificationCount() {
+                // Update the notification badge count
+                const badge = document.querySelector('#notificationsDropdown .badge');
+                if (badge) {
+                    fetch('/notifications/count', {
+                        method: 'GET',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.count > 0) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating notification count:', error);
                     });
+                }
                 }
             });
         </script>

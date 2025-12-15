@@ -50,10 +50,7 @@
                 <div class="card-header bg-primary text-white"><i class="bi bi-bar-chart-line"></i> Analytics Dashboard</div>
                 <div class="card-body">
                     <p class="card-text">View comprehensive analytics, trends, and insights for the library.</p>
-                    <div class="d-flex gap-2">
-                        {{-- Analytics removed --}}
-                        <a href="{{ route('borrowings.report') }}" class="btn btn-outline-dark">Basic Reports</a>
-                    </div>
+                    <a href="{{ route('borrowings.report') }}" class="btn btn-primary btn-sm">Basic Reports</a>
                 </div>
             </div>
         </div>
@@ -114,7 +111,7 @@
             <div class="card mb-4 h-100">
                 <div class="card-header bg-success text-white"><i class="bi bi-info-circle"></i> Need Help?</div>
                 <div class="card-body">
-                    <p>Contact the librarian at <a href="mailto:librarian@dagupancnhs.edu.ph">librarian@dagupancnhs.edu.ph</a> or visit the library office during school hours.</p>
+                    <p>Contact the librarian at <a href="mailto:librarian@libraflow.com">librarian@libraflow.com</a> or visit the library office during school hours.</p>
                 </div>
             </div>
         </div>
