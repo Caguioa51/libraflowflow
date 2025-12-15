@@ -206,4 +206,68 @@ class UserManagementController extends Controller
             ]);
         }
     }
+
+    /**
+     * Show the form for creating a new user.
+     */
+    public function create()
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        return view('admin.users.create');
+    }
+
+    /**
+     * Store a newly created user.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function store(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'student_id' => ['required', 'string', 'max:255', 'unique:users,student_id'],
+            'role' => ['required', 'in:student,teacher,admin'],
+            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+        ]);
+
+        try {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'student_id' => $request->student_id,
+                'role' => $request->role,
+                'barcode' => 'STUDENT-' . $request->student_id,
+                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            ]);
+
+            // Log the user creation for audit purposes
+            \Log::info('Admin created new user', [
+                'admin_id' => auth()->id(),
+                'admin_name' => auth()->user()->name,
+                'new_user_id' => $user->id,
+                'new_user_name' => $user->name,
+                'new_user_email' => $user->email,
+                'new_user_role' => $user->role
+            ]);
+
+            return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to create user', [
+                'error' => $e->getMessage(),
+                'admin_id' => auth()->id(),
+                'request_data' => $request->except(['password', 'password_confirmation'])
+            ]);
+
+            return back()->withErrors(['error' => 'Failed to create user. Please try again.'])->withInput();
+        }
+    }
 }
